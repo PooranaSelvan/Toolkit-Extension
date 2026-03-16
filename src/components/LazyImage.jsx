@@ -57,10 +57,14 @@ export default function LazyImage({
   const handleError = (e) => {
     setError(true);
     if (fallbackSrc) {
-      e.target.onerror = null;
-      e.target.src = fallbackSrc;
-      setError(false);
-      setLoaded(false);
+      try {
+        e.target.onerror = null;
+        e.target.src = fallbackSrc;
+        setError(false);
+        setLoaded(false);
+      } catch {
+        // Fallback src also failed — leave error state
+      }
     }
   };
 

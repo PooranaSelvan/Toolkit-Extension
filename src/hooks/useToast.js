@@ -1,19 +1,23 @@
-import { useState, useCallback } from 'react';
-
-let toastId = 0;
+import { useState, useCallback, useRef } from 'react';
 
 const VALID_TYPES = new Set(['info', 'success', 'error', 'warning']);
+const MAX_TOASTS = 5;
 
 export function useToast() {
   const [toasts, setToasts] = useState([]);
+  const toastIdRef = useRef(0);
 
   const addToast = useCallback((message, type = 'info', duration = 3000) => {
     try {
-      const id = ++toastId;
+      const id = ++toastIdRef.current;
       const safeType = VALID_TYPES.has(type) ? type : 'info';
       const safeDuration = typeof duration === 'number' && duration >= 0 ? duration : 3000;
       const safeMessage = message != null ? String(message) : 'Notification';
-      setToasts((prev) => [...prev, { id, message: safeMessage, type: safeType, duration: safeDuration }]);
+      setToasts((prev) => {
+        const next = [...prev, { id, message: safeMessage, type: safeType, duration: safeDuration }];
+        // Prevent unbounded accumulation — drop oldest toasts beyond the limit
+        return next.length > MAX_TOASTS ? next.slice(next.length - MAX_TOASTS) : next;
+      });
       return id;
     } catch (err) {
       console.warn('[useToast] Failed to add toast:', err);

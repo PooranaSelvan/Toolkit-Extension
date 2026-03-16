@@ -1,9 +1,16 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 
 /**
  * Reusable Skeleton Components for professional loading states
  * across the entire Developer Toolbox application.
  */
+
+// Deterministic pseudo-random width generator (avoids layout shifts on re-render)
+function seededWidth(index, min, max) {
+  const seed = ((index + 1) * 9301 + 49297) % 233280;
+  return min + (seed / 233280) * (max - min);
+}
 
 // ─── Base Skeleton Element ───
 export function SkeletonPulse({ className = '', style = {} }) {
@@ -19,13 +26,20 @@ export function SkeletonPulse({ className = '', style = {} }) {
 
 // ─── Text Line Skeleton ───
 export function SkeletonText({ lines = 3, className = '' }) {
+  const widths = useMemo(
+    () => Array.from({ length: lines }, (_, i) =>
+      i === lines - 1 ? 60 : seededWidth(i, 85, 100)
+    ),
+    [lines],
+  );
+
   return (
     <div className={`space-y-2.5 ${className}`} role="presentation" aria-hidden="true">
-      {Array.from({ length: lines }).map((_, i) => (
+      {widths.map((w, i) => (
         <div
           key={i}
           className="skeleton h-3 rounded-md"
-          style={{ width: i === lines - 1 ? '60%' : `${85 + Math.random() * 15}%` }}
+          style={{ width: `${w}%` }}
         />
       ))}
     </div>
@@ -261,42 +275,7 @@ export function SkeletonSettings() {
         </div>
       </div>
 
-      {/* Theme Section */}
-      <div className="rounded-xl border border-base-300/40 bg-base-100/80 p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-9 h-9 rounded-lg skeleton" />
-          <div className="space-y-1.5">
-            <div className="skeleton h-5 w-28 rounded-md" />
-            <div className="skeleton h-3 w-48 rounded-md" />
-          </div>
-        </div>
-        {/* Filter Tabs */}
-        <div className="flex gap-1.5 mb-6">
-          {[60, 60, 60].map((w, i) => (
-            <div key={i} className="skeleton h-9 rounded-lg" style={{ width: w }} />
-          ))}
-        </div>
-        {/* Theme Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.03, duration: 0.25 }}
-              className="rounded-xl overflow-hidden border border-base-300/40"
-            >
-              <div className="skeleton h-24 w-full rounded-none" />
-              <div className="p-2.5 flex items-center gap-2">
-                <div className="skeleton w-4 h-4 rounded-full" />
-                <div className="skeleton h-3 w-16 rounded-md" />
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* Data Section */}
+      {/* Data & Storage Section */}
       <div className="rounded-xl border border-base-300/40 bg-base-100/80 p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-9 h-9 rounded-lg skeleton" />
@@ -305,12 +284,52 @@ export function SkeletonSettings() {
             <div className="skeleton h-3 w-44 rounded-md" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           {[1, 2].map((i) => (
             <div key={i} className="rounded-xl border border-base-300/20 p-4 space-y-2">
               <div className="skeleton h-3 w-20 rounded-md" />
               <div className="skeleton h-8 w-16 rounded-md" />
               <div className="skeleton h-1.5 w-full rounded-full mt-2" />
+            </div>
+          ))}
+        </div>
+        <div className="skeleton h-8 w-32 rounded-xl" />
+      </div>
+
+      {/* Author Section */}
+      <div className="rounded-xl border border-base-300/40 bg-base-100/80 overflow-hidden">
+        <div className="skeleton h-28 w-full rounded-none" />
+        <div className="px-6 pb-6">
+          <div className="flex items-end gap-4 -mt-10 mb-5">
+            <div className="w-20 h-20 rounded-2xl skeleton ring-4 ring-base-100 shrink-0" />
+            <div className="flex-1 space-y-1.5 pb-1">
+              <div className="skeleton h-5 w-40 rounded-md" />
+              <div className="skeleton h-3 w-28 rounded-md" />
+            </div>
+          </div>
+          <div className="skeleton h-3 w-full rounded-md mb-2" />
+          <div className="skeleton h-3 w-3/4 rounded-md mb-5" />
+          <div className="flex gap-2">
+            <div className="skeleton h-8 w-24 rounded-xl" />
+            <div className="skeleton h-8 w-24 rounded-xl" />
+          </div>
+        </div>
+      </div>
+
+      {/* About Section */}
+      <div className="rounded-xl border border-base-300/40 bg-base-100/80 p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-9 h-9 rounded-lg skeleton" />
+          <div className="space-y-1.5">
+            <div className="skeleton h-5 w-20 rounded-md" />
+            <div className="skeleton h-3 w-36 rounded-md" />
+          </div>
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center gap-3">
+              <div className="skeleton h-3 w-24 rounded-md" />
+              <div className="skeleton h-3 w-48 rounded-md" />
             </div>
           ))}
         </div>
@@ -321,6 +340,13 @@ export function SkeletonSettings() {
 
 // ─── Sidebar Skeleton ───
 export function SkeletonSidebar() {
+  const itemWidths = useMemo(
+    () => [1, 2].map((cat) =>
+      [1, 2, 3].map((item) => seededWidth(cat * 10 + item, 60, 100))
+    ),
+    [],
+  );
+
   return (
     <div className="space-y-1 px-3 py-2" role="presentation" aria-hidden="true">
       {/* Nav items */}
@@ -332,17 +358,17 @@ export function SkeletonSidebar() {
       ))}
       <div className="h-px bg-base-300/20 mx-3 my-2" />
       {/* Category */}
-      {[1, 2].map((cat) => (
+      {[1, 2].map((cat, catIdx) => (
         <div key={cat} className="mb-2">
           <div className="flex items-center gap-2.5 px-3 py-2">
             <div className="skeleton w-4 h-4 rounded" />
             <div className="skeleton h-2.5 w-24 rounded-md" />
           </div>
           <div className="pl-4 space-y-0.5 pt-1">
-            {[1, 2, 3].map((item) => (
+            {[1, 2, 3].map((item, itemIdx) => (
               <div key={item} className="flex items-center gap-2.5 px-3 py-2 rounded-xl">
                 <div className="w-7 h-7 rounded-lg skeleton" />
-                <div className="skeleton h-3 rounded-md" style={{ width: 60 + Math.random() * 40 }} />
+                <div className="skeleton h-3 rounded-md" style={{ width: itemWidths[catIdx][itemIdx] }} />
               </div>
             ))}
           </div>
@@ -354,15 +380,23 @@ export function SkeletonSidebar() {
 
 // ─── Inline Content Skeleton (for within-tool lazy sections) ───
 export function SkeletonInlineContent({ rows = 4, className = '' }) {
+  const widths = useMemo(
+    () => Array.from({ length: rows }, (_, i) => ({
+      primary: seededWidth(i * 2, 70, 100),
+      secondary: seededWidth(i * 2 + 1, 50, 80),
+    })),
+    [rows],
+  );
+
   return (
     <div className={`space-y-3 ${className}`} role="status" aria-label="Loading content">
       <span className="sr-only">Loading...</span>
-      {Array.from({ length: rows }).map((_, i) => (
+      {widths.map((w, i) => (
         <div key={i} className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg skeleton shrink-0" />
           <div className="flex-1 space-y-1.5">
-            <div className="skeleton h-3 rounded-md" style={{ width: `${70 + Math.random() * 30}%` }} />
-            <div className="skeleton h-2 rounded-md" style={{ width: `${50 + Math.random() * 30}%` }} />
+            <div className="skeleton h-3 rounded-md" style={{ width: `${w.primary}%` }} />
+            <div className="skeleton h-2 rounded-md" style={{ width: `${w.secondary}%` }} />
           </div>
         </div>
       ))}

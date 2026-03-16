@@ -1,79 +1,100 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { isVsCodeWebview, postMessage, onMessage } from '../vscodeApi';
 
-const THEMES = [
-  { id: 'toolbox', name: 'Toolbox', emoji: '🔧', category: 'Light' },
-  { id: 'light', name: 'Light', emoji: '☀️', category: 'Light' },
-  { id: 'cupcake', name: 'Cupcake', emoji: '🧁', category: 'Light' },
-  { id: 'corporate', name: 'Corporate', emoji: '🏢', category: 'Light' },
-  { id: 'garden', name: 'Garden', emoji: '🌷', category: 'Light' },
-  { id: 'lofi', name: 'Lo-Fi', emoji: '🎵', category: 'Light' },
-  { id: 'pastel', name: 'Pastel', emoji: '🎨', category: 'Light' },
-  { id: 'fantasy', name: 'Fantasy', emoji: '🧚', category: 'Light' },
-  { id: 'wireframe', name: 'Wireframe', emoji: '📐', category: 'Light' },
-  { id: 'cmyk', name: 'CMYK', emoji: '🖨️', category: 'Light' },
-  { id: 'autumn', name: 'Autumn', emoji: '🍂', category: 'Light' },
-  { id: 'acid', name: 'Acid', emoji: '🧪', category: 'Light' },
-  { id: 'lemonade', name: 'Lemonade', emoji: '🍋', category: 'Light' },
-  { id: 'winter', name: 'Winter', emoji: '❄️', category: 'Light' },
-  { id: 'nord', name: 'Nord', emoji: '🏔️', category: 'Light' },
-  { id: 'retro', name: 'Retro', emoji: '📺', category: 'Light' },
-  { id: 'valentine', name: 'Valentine', emoji: '💕', category: 'Light' },
-  { id: 'aqua', name: 'Aqua', emoji: '💧', category: 'Light' },
-  { id: 'cyberpunk', name: 'Cyberpunk', emoji: '🤖', category: 'Light' },
-  { id: 'toolbox-dark', name: 'Toolbox Dark', emoji: '🔷', category: 'Dark' },
-  { id: 'dark', name: 'Dark', emoji: '🌙', category: 'Dark' },
-  { id: 'synthwave', name: 'Synthwave', emoji: '🌆', category: 'Dark' },
-  { id: 'halloween', name: 'Halloween', emoji: '🎃', category: 'Dark' },
-  { id: 'black', name: 'Black', emoji: '🖤', category: 'Dark' },
-  { id: 'luxury', name: 'Luxury', emoji: '👑', category: 'Dark' },
-  { id: 'dracula', name: 'Dracula', emoji: '🧛', category: 'Dark' },
-  { id: 'business', name: 'Business', emoji: '💼', category: 'Dark' },
-  { id: 'night', name: 'Night', emoji: '🌃', category: 'Dark' },
-  { id: 'coffee', name: 'Coffee', emoji: '☕', category: 'Dark' },
-  { id: 'dim', name: 'Dim', emoji: '🔅', category: 'Dark' },
-  { id: 'sunset', name: 'Sunset', emoji: '🌅', category: 'Dark' },
-];
+/**
+ * Theme is now automatically detected from the VS Code editor theme.
+ * - Light VS Code themes  → 'toolbox' (light)
+ * - Dark VS Code themes   → 'toolbox-dark' (dark)
+ * No manual theme selection is exposed to the user.
+ *
+ * FOUC prevention: The initial theme is set synchronously on <html> before React
+ * hydrates, using the data-theme attribute in index.html. The ThemeProvider then
+ * reconciles with the actual VS Code theme as soon as the extension host responds.
+ */
 
-const VALID_THEME_IDS = new Set(THEMES.map(t => t.id));
+const LIGHT_THEME = 'toolbox';
+const DARK_THEME = 'toolbox-dark';
 
 const ThemeContext = createContext(null);
 
+/**
+ * Determine the initial theme.
+ * In VS Code webview: read the current data-theme from the document (set by index.html or prior render),
+ * defaulting to dark if not set — most VS Code users use dark themes.
+ * Outside VS Code: respect prefers-color-scheme.
+ */
+function getInitialTheme() {
+  try {
+    // If a data-theme is already set on the document, use it to avoid FOUC
+    const existing = document.documentElement.getAttribute('data-theme');
+    if (existing === LIGHT_THEME || existing === DARK_THEME) {
+      return existing;
+    }
+  } catch { /* safe — SSR or test environment */ }
+
+  if (isVsCodeWebview()) {
+    return DARK_THEME; // Safe default; will be corrected immediately by extension host
+  }
+  // Browser fallback: use system preference
+  try {
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: light)').matches) {
+      return LIGHT_THEME;
+    }
+  } catch { /* matchMedia not available */ }
+  return DARK_THEME;
+}
+
 export function ThemeProvider({ children }) {
-  const [theme, setThemeState] = useState(() => {
-    try {
-      const saved = localStorage.getItem('devtoolbox-theme');
-      // Only accept valid built-in theme IDs
-      if (saved && VALID_THEME_IDS.has(saved)) return saved;
-      return 'toolbox';
-    } catch {
-      return 'toolbox';
-    }
-  });
+  const [theme, setThemeState] = useState(getInitialTheme);
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    try {
-      localStorage.setItem('devtoolbox-theme', theme);
-    } catch {}
-  }, [theme]);
-
+  // Memoized setter to avoid unnecessary re-renders
   const setTheme = useCallback((newTheme) => {
-    try {
-      // Validate theme before applying
-      if (newTheme && (VALID_THEME_IDS.has(newTheme) || typeof newTheme === 'string')) {
-        setThemeState(newTheme);
-      } else {
-        console.warn(`[ThemeContext] Invalid theme: "${newTheme}", falling back to default.`);
-        setThemeState('toolbox');
-      }
-    } catch (err) {
-      console.error('[ThemeContext] Error setting theme:', err);
-      setThemeState('toolbox');
-    }
+    if (newTheme !== LIGHT_THEME && newTheme !== DARK_THEME) return;
+    setThemeState((prev) => (prev === newTheme ? prev : newTheme));
   }, []);
 
+  // Apply theme to DOM whenever it changes — also set color-scheme for native elements
+  useEffect(() => {
+    try {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.style.colorScheme = theme === DARK_THEME ? 'dark' : 'light';
+    } catch { /* safe */ }
+  }, [theme]);
+
+  // VS Code theme detection: request theme on mount and listen for changes
+  useEffect(() => {
+    if (!isVsCodeWebview()) {
+      // Browser fallback: listen for system color-scheme changes
+      try {
+        const mq = window.matchMedia?.('(prefers-color-scheme: dark)');
+        if (mq) {
+          const handler = (e) => setTheme(e.matches ? DARK_THEME : LIGHT_THEME);
+          mq.addEventListener('change', handler);
+          return () => mq.removeEventListener('change', handler);
+        }
+      } catch { /* matchMedia not available */ }
+      return;
+    }
+
+    // Request the current VS Code theme from the extension host
+    try {
+      postMessage({ type: 'getTheme' });
+    } catch { /* safe — extension host may not be ready */ }
+
+    // Listen for theme info messages from the extension host
+    const cleanup = onMessage((message) => {
+      if (message && message.type === 'themeInfo') {
+        setTheme(message.isDark ? DARK_THEME : LIGHT_THEME);
+      }
+    });
+
+    return cleanup;
+  }, [setTheme]);
+
+  const isDark = theme === DARK_THEME;
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, themes: THEMES }}>
+    <ThemeContext.Provider value={{ theme, isDark }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -81,9 +102,12 @@ export function ThemeProvider({ children }) {
 
 export function useTheme() {
   const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
+  if (!ctx) {
+    // Graceful fallback instead of throwing — prevents full app crash if used outside provider
+    console.warn('[useTheme] Used outside ThemeProvider — returning fallback');
+    return { theme: DARK_THEME, isDark: true };
+  }
   return ctx;
 }
 
-export { THEMES };
 export default ThemeContext;

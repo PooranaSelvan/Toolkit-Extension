@@ -23,7 +23,7 @@ const COLORS = {
 const audioCtxRef = { current: null };
 function playTone(freq, dur = 0.06, type = 'sine') {
   try {
-    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || /** @type {typeof AudioContext} */ (window).webkitAudioContext)();
     const ctx = audioCtxRef.current;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -335,8 +335,8 @@ export default function EventLoopVisualizer() {
     setDone(false); setStepNo(prev => Math.max(-1, prev - 1));
   }, [stepNo]);
 
-  useEffect(() => { if (sound && currentStep) playSoundForPhase(currentStep.phase); }, [stepNo, sound]); // eslint-disable-line
-  useEffect(() => { if (playing) startTimer(speed); }, [speed]); // eslint-disable-line
+  useEffect(() => { if (sound && currentStep) playSoundForPhase(currentStep.phase); }, [stepNo, sound, currentStep]);
+  useEffect(() => { if (playing) startTimer(speed); }, [speed, playing, startTimer]);
   useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
 
   const state = useMemo(() => {

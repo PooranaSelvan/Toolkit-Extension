@@ -142,7 +142,7 @@ const COLORS = {
 const audioCtxRef = { current: null };
 function playTone(freq, dur = 0.06) {
   try {
-    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || /** @type {typeof AudioContext} */ (window).webkitAudioContext)();
     const ctx = audioCtxRef.current;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -382,7 +382,7 @@ export default function RecursionVisualizer() {
     }
   }, [stepNo, sound]);
 
-  useEffect(() => { if (playing) startTimer(speed); }, [speed]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (playing) startTimer(speed); }, [speed, playing, startTimer]);
   useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
 
   // ── Derive node states ─────────────────────────────────────────────

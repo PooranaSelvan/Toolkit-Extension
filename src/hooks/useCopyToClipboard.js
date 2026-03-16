@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { copyToClipboard as vscodeCopy, isVsCodeWebview } from '../vscodeApi';
+import { copyToClipboard as vscodeCopy } from '../vscodeApi';
 
 /**
  * Custom hook for clipboard operations with feedback state.
@@ -14,6 +14,8 @@ export default function useCopyToClipboard(resetDelay = 2000) {
   const copyToClipboard = useCallback(
     async (text) => {
       try {
+        // vscodeCopy (from vscodeApi.js) already includes a textarea fallback,
+        // so no duplicate fallback is needed here.
         const success = await vscodeCopy(text);
         if (success) {
           setCopied(true);
@@ -23,23 +25,7 @@ export default function useCopyToClipboard(resetDelay = 2000) {
         return false;
       } catch (err) {
         console.error('Failed to copy to clipboard:', err);
-        // Fallback for older browsers
-        try {
-          const textArea = document.createElement('textarea');
-          textArea.value = text;
-          textArea.style.position = 'fixed';
-          textArea.style.left = '-9999px';
-          document.body.appendChild(textArea);
-          textArea.select();
-          document.execCommand('copy');
-          document.body.removeChild(textArea);
-          setCopied(true);
-          setTimeout(() => setCopied(false), resetDelay);
-          return true;
-        } catch (fallbackErr) {
-          console.error('Fallback copy failed:', fallbackErr);
-          return false;
-        }
+        return false;
       }
     },
     [resetDelay]

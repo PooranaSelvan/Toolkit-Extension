@@ -4,7 +4,7 @@ import { isVsCodeWebview } from '../vscodeApi';
 
 export default function SEO({ 
   title = 'Developer Toolbox',
-  description = 'Your all-in-one developer toolkit with 20+ free utilities',
+  description = 'Your all-in-one developer toolkit with free, privacy-first utilities',
   keywords = 'developer tools, web utilities, online tools, developer utilities',
   image = '/favicon.svg',
   url

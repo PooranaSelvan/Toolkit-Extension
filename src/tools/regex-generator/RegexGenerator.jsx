@@ -482,6 +482,7 @@ export default function RegexGenerator() {
   const [savedPatterns, setSavedPatterns] = useLocalStorage('regex-saved-patterns-v2', []);
   const [patternName, setPatternName] = useState('');
   const [presetSearch, setPresetSearch] = useState('');
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const { copied, copyToClipboard } = useCopyToClipboard();
   const patternRef = useRef(null);
 
@@ -1310,10 +1311,34 @@ const handleImport = useCallback(() => {
                   <span className="text-sm font-semibold">
                     {savedPatterns.length} Saved Pattern{savedPatterns.length !== 1 ? 's' : ''}
                   </span>
-                  <button onClick={() => { if (confirm('Delete all saved patterns?')) setSavedPatterns([]); }}
-                    className="btn btn-xs btn-ghost btn-error gap-1">
-                    <Trash2 size={12} /> Clear All
-                  </button>
+                  <div className="relative">
+                    <button onClick={() => setShowClearConfirm(true)}
+                      className="btn btn-xs btn-ghost btn-error gap-1">
+                      <Trash2 size={12} /> Clear All
+                    </button>
+                    <AnimatePresence>
+                      {showClearConfirm && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setShowClearConfirm(false)} />
+                          <motion.div
+                            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute right-0 top-full mt-2 w-56 bg-base-100 rounded-xl border border-error/20 shadow-2xl z-50 p-3"
+                          >
+                            <p className="text-xs font-semibold mb-2">Delete all saved patterns?</p>
+                            <div className="flex gap-2">
+                              <button onClick={() => { setSavedPatterns([]); setShowClearConfirm(false); }} className="btn btn-error btn-xs gap-1 rounded-lg">
+                                <Trash2 size={11} /> Delete All
+                              </button>
+                              <button onClick={() => setShowClearConfirm(false)} className="btn btn-ghost btn-xs rounded-lg">Cancel</button>
+                            </div>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   {savedPatterns.map(sp => (

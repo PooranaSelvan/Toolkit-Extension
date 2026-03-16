@@ -5,11 +5,12 @@ import {
   ArrowRight, Wrench, Zap, Shield, Sparkles,
   Heart, TrendingUp, Code2,
   ChevronRight, Star, Globe, Layers,
-  Palette,
+  Palette, Settings,
   ExternalLink, ArrowUpRight, TerminalSquare,
   Clock, Cpu, Search,
 } from 'lucide-react';
 import { getTools, CATEGORIES, getToolsByCategory } from '../utils/toolRegistry';
+import { isVsCodeWebview, openExternal } from '../vscodeApi';
 import SEO from '../components/SEO';
 
 const RECENT_TOOLS_KEY = 'devtoolbox-recent-tools';
@@ -22,7 +23,7 @@ function getRecentTools() {
   } catch { return []; }
 }
 
-const FEATURED_TOOL_IDS = ['api-tester', 'json-formatter', 'color-palette', 'frontend-playground', 'regex-generator', 'jwt-decoder'];
+const FEATURED_TOOL_IDS = ['api-tester', 'json-formatter', 'color-palette', 'grid-generator', 'regex-generator', 'jwt-decoder'];
 
 // Stagger animation variants
 const containerVariants = {
@@ -38,19 +39,22 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
 };
 
-// Animated counter hook
+// Animated counter hook — robust against missing ref, non-numeric target, and rapid re-renders
 function useCounter(target, duration = 1500) {
   const [count, setCount] = useState(0);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-50px' });
+  const hasAnimated = useRef(false);
   
   useEffect(() => {
-    if (!isInView) return;
+    if (!isInView || hasAnimated.current) return;
     try {
-      let start = 0;
-      const end = Number(target) || 0;
+      const end = Math.max(0, Math.round(Number(target) || 0));
       if (end <= 0) { setCount(0); return; }
-      const increment = end / (duration / 16);
+      hasAnimated.current = true;
+      let start = 0;
+      const steps = Math.max(1, Math.ceil(duration / 16));
+      const increment = end / steps;
       const timer = setInterval(() => {
         start += increment;
         if (start >= end) {
@@ -62,7 +66,7 @@ function useCounter(target, duration = 1500) {
       }, 16);
       return () => clearInterval(timer);
     } catch {
-      setCount(Number(target) || 0);
+      setCount(Math.max(0, Math.round(Number(target) || 0)));
     }
   }, [isInView, target, duration]);
 
@@ -177,34 +181,57 @@ function ToolShowcaseCard({ tool }) {
 function HeroSearchPreview({ tools }) {
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
+  const blurTimeoutRef = useRef(null);
+  const inputRef = useRef(null);
   const filtered = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
-    return tools.filter(
-      t => t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q) || t.tags.some(tag => tag.includes(q))
+    return (tools || []).filter(
+      t => t && t.name && (
+        t.name.toLowerCase().includes(q) ||
+        (t.description && t.description.toLowerCase().includes(q)) ||
+        (Array.isArray(t.tags) && t.tags.some(tag => typeof tag === 'string' && tag.includes(q)))
+      )
     ).slice(0, 5);
   }, [query, tools]);
+
+  // Cleanup blur timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+    };
+  }, []);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
-      className="relative max-w-md mx-auto mb-6"
+      className="relative max-w-md mx-auto mb-6 px-4 sm:px-0"
     >
       <div className={`relative flex items-center rounded-2xl border ${focused ? 'border-primary/40 shadow-lg shadow-primary/10' : 'border-base-300/50'} bg-base-100/90 backdrop-blur-sm transition-all duration-300`}>
-        <Search size={16} className={`ml-4 ${focused ? 'text-primary' : 'opacity-30'} transition-colors duration-200`} />
+        <Search size={16} className={`ml-4 shrink-0 ${focused ? 'text-primary' : 'opacity-30'} transition-colors duration-200`} />
         <input
+          ref={inputRef}
           type="text"
           placeholder="Quick search tools..."
           value={query}
-          onChange={e => setQuery(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setTimeout(() => setFocused(false), 200)}
-          className="w-full bg-transparent border-none outline-none px-3 py-3 text-sm font-medium placeholder:opacity-35"
+          onChange={e => setQuery(e.target.value.slice(0, 100))}
+          onFocus={() => {
+            if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+            setFocused(true);
+          }}
+          onBlur={() => {
+            blurTimeoutRef.current = setTimeout(() => setFocused(false), 200);
+          }}
+          className="w-full bg-transparent border-none outline-none px-3 py-3 text-sm font-medium placeholder:opacity-35 min-w-0"
+          maxLength={100}
+          aria-label="Search tools"
+          autoComplete="off"
+          spellCheck="false"
         />
         {query && (
-          <button onClick={() => setQuery('')} className="mr-3 opacity-30 hover:opacity-60 transition-opacity">
+          <button onClick={() => { setQuery(''); inputRef.current?.focus(); }} className="mr-3 opacity-30 hover:opacity-60 transition-opacity shrink-0 p-1" aria-label="Clear search">
             <span className="text-xs font-bold">✕</span>
           </button>
         )}
@@ -216,20 +243,24 @@ function HeroSearchPreview({ tools }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 right-0 mt-2 rounded-xl border border-base-300/40 bg-base-100/98 backdrop-blur-2xl shadow-2xl shadow-base-content/[0.08] overflow-hidden z-50"
+            className="absolute top-full left-0 right-0 mx-4 sm:mx-0 mt-2 rounded-xl border border-base-300/40 bg-base-100/98 backdrop-blur-2xl shadow-2xl shadow-base-content/[0.08] overflow-hidden overflow-y-auto max-h-[min(300px,50vh)] z-50 scrollbar-thin"
+            role="listbox"
           >
             {filtered.map((tool) => {
               const Icon = tool.icon;
+              if (!Icon) return null;
               return (
                 <Link
                   key={tool.id}
                   to={tool.path}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-primary/[0.06] transition-colors duration-150 border-b border-base-300/10 last:border-b-0"
+                  role="option"
+                  onClick={() => setQuery('')}
                 >
                   <div className="w-8 h-8 rounded-lg bg-primary/[0.08] flex items-center justify-center text-primary shrink-0">
                     <Icon size={15} strokeWidth={1.8} />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold truncate">{tool.name}</p>
                     <p className="text-[10px] opacity-40 truncate">{tool.description}</p>
                   </div>
@@ -317,7 +348,7 @@ export default function HomePage() {
 
   // Counters for stats
   const toolCounter = useCounter(tools.length, 1200);
-  const themeCounter = useCounter(30, 1200);
+  const categoryCounter = useCounter(displayCategories.length, 1200);
   const privacyCounter = useCounter(100, 1000);
 
   // Parallax for hero
@@ -336,24 +367,13 @@ export default function HomePage() {
       <div className="max-w-6xl mx-auto" role="main">
         {/* ═══════════ HERO SECTION ═══════════ */}
       <section ref={heroRef} className="relative text-center pt-6 sm:pt-10 pb-16 sm:pb-24">
-        {/* Enhanced grid pattern background with parallax */}
+        {/* Grid pattern background — removed 3 continuous Framer Motion blob
+            animations (20–25s infinite loops) that ran expensive JS on every
+            frame. Static blurred circles at 3–6% opacity are visually identical. */}
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
           <div className="hero-grid-bg absolute inset-0 opacity-60" />
-          <motion.div
-            className="absolute top-[-10%] left-[15%] w-[500px] h-[500px] rounded-full blur-[120px] bg-primary opacity-[0.06]"
-            animate={{ x: [0, 30, -15, 0], y: [0, -20, 15, 0], scale: [1, 1.08, 0.92, 1] }}
-            transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          <motion.div
-            className="absolute top-[5%] right-[10%] w-[400px] h-[400px] rounded-full blur-[120px] bg-secondary opacity-[0.05]"
-            animate={{ x: [0, -20, 25, 0], y: [0, 15, -20, 0], scale: [1, 0.95, 1.1, 1] }}
-            transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          <motion.div
-            className="absolute bottom-[-5%] left-[50%] w-[350px] h-[350px] rounded-full blur-[100px] bg-accent opacity-[0.03]"
-            animate={{ x: [0, 15, -20, 0], y: [0, -10, 20, 0] }}
-            transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
-          />
+          <div className="absolute top-[-10%] left-[15%] w-[500px] h-[500px] rounded-full blur-[120px] bg-primary opacity-[0.06]" />
+          <div className="absolute top-[5%] right-[10%] w-[400px] h-[400px] rounded-full blur-[120px] bg-secondary opacity-[0.05]" />
         </div>
 
         <motion.div style={{ y: heroY, opacity: heroOpacity }}>
@@ -435,9 +455,10 @@ export default function HomePage() {
             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-300" />
           </Link>
           <a
-            href="https://github.com/PooranaSelvan/Developer-Toolbox"
+            href="https://github.com/PooranaSelvan/Toolkit-Extension"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={(e) => { if (isVsCodeWebview()) { e.preventDefault(); openExternal('https://github.com/PooranaSelvan/Toolkit-Extension'); } }}
             className="btn btn-outline rounded-full gap-2.5 px-7 border-base-300/50 hover:border-primary/30 hover:bg-primary/5 group"
           >
             <Star size={16} className="group-hover:text-warning transition-colors duration-300" />
@@ -524,7 +545,7 @@ export default function HomePage() {
           <FeatureCard
             icon={Palette}
             title="Beautiful UI"
-            description="30+ handcrafted themes with modern design. Dark mode, light mode, and everything in between."
+            description="Modern design that auto-syncs with your VS Code theme — seamless dark and light mode support."
             color="bg-gradient-to-br from-purple-500 to-pink-500"
             accentColor="#a855f7"
           />
@@ -653,28 +674,31 @@ export default function HomePage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {[
             { counter: toolCounter, label: 'Developer Tools', suffix: '+', icon: Wrench, color: 'text-primary', bg: 'bg-primary/10', borderHover: 'hover:border-primary/20' },
-            { counter: themeCounter, label: 'Themes Available', suffix: '+', icon: Palette, color: 'text-secondary', bg: 'bg-secondary/10', borderHover: 'hover:border-secondary/20' },
+            { counter: categoryCounter, label: 'Tool Categories', suffix: '', icon: Layers, color: 'text-secondary', bg: 'bg-secondary/10', borderHover: 'hover:border-secondary/20' },
             { counter: privacyCounter, label: 'Client-Side', suffix: '%', icon: Cpu, color: 'text-success', bg: 'bg-success/10', borderHover: 'hover:border-success/20' },
-            { value: 0, label: 'Data Collected', suffix: '', icon: Shield, color: 'text-info', bg: 'bg-info/10', borderHover: 'hover:border-info/20' },
-          ].map(({ counter, value, label, suffix, icon: Icon, color, bg, borderHover }, idx) => (
-            <motion.div
-              key={label}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              whileHover={{ y: -4, transition: { duration: 0.3 } }}
-              className={`stat-card-frost rounded-2xl p-5 sm:p-7 text-center group cursor-default ${borderHover}`}
-            >
-              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${bg} flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-300`}>
-                <Icon size={18} className={`${color} sm:w-5 sm:h-5`} />
-              </div>
-              <div ref={counter?.ref} className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-1.5">
-                <span className="counter-highlight gradient-text">{counter ? counter.count : value}{suffix}</span>
-              </div>
-              <p className="text-[10px] sm:text-xs font-semibold opacity-45 tracking-wide">{label}</p>
-            </motion.div>
-          ))}
+            { counter: null, value: 0, label: 'Data Collected', suffix: '', icon: Shield, color: 'text-info', bg: 'bg-info/10', borderHover: 'hover:border-info/20' },
+          ].map(({ counter, value, label, suffix, icon: Icon, color, bg, borderHover }, idx) => {
+            const displayValue = counter ? counter.count : (value ?? 0);
+            return (
+              <motion.div
+                key={label}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                whileHover={{ y: -4, transition: { duration: 0.3 } }}
+                className={`stat-card-frost rounded-2xl p-4 sm:p-7 text-center group cursor-default ${borderHover}`}
+              >
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${bg} flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-300`}>
+                  <Icon size={18} className={`${color} sm:w-5 sm:h-5`} />
+                </div>
+                <div ref={counter?.ref ?? undefined} className="text-xl sm:text-3xl lg:text-4xl font-extrabold mb-1.5">
+                  <span className="counter-highlight gradient-text">{displayValue}{suffix}</span>
+                </div>
+                <p className="text-[10px] sm:text-xs font-semibold opacity-45 tracking-wide">{label}</p>
+              </motion.div>
+            );
+          })}
         </div>
       </AnimatedSection>
 
@@ -713,17 +737,9 @@ export default function HomePage() {
           {/* Grid pattern in CTA */}
           <div className="hero-grid-bg absolute inset-0 opacity-30" />
           
-          {/* Animated gradient blobs */}
-          <motion.div
-            className="absolute top-[-20%] right-[-10%] w-80 h-80 rounded-full blur-[80px] bg-primary/8"
-            animate={{ x: [0, 30, 0], y: [0, -20, 0], scale: [1, 1.15, 1] }}
-            transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          <motion.div
-            className="absolute bottom-[-20%] left-[-10%] w-64 h-64 rounded-full blur-[80px] bg-secondary/6"
-            animate={{ x: [0, -20, 0], y: [0, 15, 0], scale: [1, 1.1, 1] }}
-            transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-          />
+          {/* Static gradient blobs — infinite animations removed for performance */}
+          <div className="absolute top-[-20%] right-[-10%] w-80 h-80 rounded-full blur-[80px] bg-primary/8" />
+          <div className="absolute bottom-[-20%] left-[-10%] w-64 h-64 rounded-full blur-[80px] bg-secondary/6" />
 
           <div className="relative px-8 py-16 sm:py-20 text-center">
             <motion.div
@@ -751,16 +767,15 @@ export default function HomePage() {
                 to="/settings"
                 className="btn btn-outline rounded-full gap-2.5 px-6 border-primary/20 hover:border-primary/40 hover:bg-primary/5"
               >
-                <Palette size={15} />
-                Browse 30+ Themes
+                <Settings size={15} />
+                Settings & Info
               </Link>
             </div>
           </div>
         </div>
       </AnimatedSection>
-
-      {/* ═══════════ FOOTER ═══════════ */}
-      <footer className="mb-8">
+{/* ═══════════ FOOTER ═══════════ */}
+      <footer className="mb-8" role="contentinfo">
         <div className="section-divider mb-10">
           <Sparkles size={10} className="text-primary/30" />
         </div>
@@ -769,24 +784,26 @@ export default function HomePage() {
             href="https://github.com/PooranaSelvan"
             target="_blank"
             rel="noopener noreferrer"
-            className="group inline-flex items-center gap-3 px-5 py-3 rounded-2xl border border-base-300/40 bg-base-100/80 backdrop-blur-sm hover:border-primary/20 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+            onClick={(e) => { if (isVsCodeWebview()) { e.preventDefault(); openExternal('https://github.com/PooranaSelvan'); } }}
+            className="group inline-flex items-center gap-3 px-5 py-3 rounded-2xl border border-base-300/40 bg-base-100/80 backdrop-blur-sm hover:border-primary/20 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 max-w-full"
           >
-            <div className="w-10 h-10 rounded-xl overflow-hidden ring-2 ring-base-300/40 group-hover:ring-primary/30 transition-all duration-200 shrink-0 group-hover:scale-105">
+            <div className="w-10 h-10 rounded-xl overflow-hidden ring-2 ring-base-300/40 group-hover:ring-primary/30 transition-all duration-200 shrink-0 group-hover:scale-105 bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
               <img
-                src="https://avatars.githubusercontent.com/u/130943602?v=4"
-                alt="Poorana Selvan"
+                src="https://avatars.githubusercontent.com/u/130943602?v=4&s=80"
+                alt=""
                 className="w-full h-full object-cover"
                 loading="lazy"
+                width={40}
+                height={40}
                 onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = 'https://ui-avatars.com/api/?name=PS&size=40&background=2D79FF&color=fff&bold=true';
+                  try { e.target.onerror = null; e.target.style.display = 'none'; } catch { /* safe */ }
                 }}
               />
             </div>
-            <div className="text-left">
-              <p className="text-xs font-bold group-hover:text-primary transition-colors duration-200 flex items-center gap-1.5">
+            <div className="text-left min-w-0">
+              <p className="text-xs font-bold group-hover:text-primary transition-colors duration-200 flex items-center gap-1.5 truncate">
                 Built by Poorana Selvan
-                <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 opacity-25 group-hover:opacity-60 transition-opacity" fill="currentColor">
+                <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 opacity-25 group-hover:opacity-60 transition-opacity shrink-0" fill="currentColor" aria-hidden="true">
                   <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
                 </svg>
               </p>
@@ -794,11 +811,10 @@ export default function HomePage() {
             </div>
           </a>
           <p className="text-[11px] opacity-20 flex items-center gap-1.5 flex-wrap justify-center">
-            Crafted with <Heart size={10} className="text-error animate-pulse" /> by Poorana Selvan
+            Crafted with <Heart size={10} className="text-error" aria-label="love" /> by Poorana Selvan
           </p>
         </div>
-      </footer>
-      </div>
+      </footer>      </div>
     </>
   );
 }

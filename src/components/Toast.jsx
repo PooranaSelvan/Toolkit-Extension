@@ -97,18 +97,19 @@ export default function Toast({
   );
 }
 
-// Toast Container Component
+// Toast Container Component — positioned safely below header with safe-area awareness
 export function ToastContainer({ toasts = [], onRemove }) {
-  if (toasts.length === 0) return null;
+  if (!Array.isArray(toasts) || toasts.length === 0) return null;
 
   return (
     <div 
-      className="fixed top-20 right-4 z-50 space-y-2 max-w-md w-full pointer-events-none"
+      className="fixed top-[4rem] sm:top-[4.5rem] right-2 sm:right-4 z-50 space-y-2 max-w-[min(24rem,calc(100vw-1rem))] w-full pointer-events-none"
+      style={{ maxHeight: 'calc(100vh - 5rem)', overflowY: 'auto', overflowX: 'hidden' }}
       aria-live="polite"
       aria-atomic="true"
     >
       <AnimatePresence>
-        {toasts.map((toast) => (
+        {toasts.slice(0, 5).map((toast) => (
           <motion.div
             key={toast.id}
             layout
@@ -117,8 +118,8 @@ export function ToastContainer({ toasts = [], onRemove }) {
             <Toast
               message={toast.message}
               type={toast.type}
-              duration={toast.duration}
-              onClose={() => onRemove(toast.id)}
+              duration={toast.duration ?? 3000}
+              onClose={() => { try { onRemove(toast.id); } catch { /* safe */ } }}
             />
           </motion.div>
         ))}

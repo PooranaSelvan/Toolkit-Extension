@@ -5,7 +5,7 @@ import HomePage from './pages/HomePage';
 import Dashboard from './pages/Dashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 import { SkeletonToolPage, SkeletonSettings } from './components/Skeleton';
-import { isVsCodeWebview, onMessage, getInitialRoute } from './vscodeApi';
+import { isVsCodeWebview, onMessage, getInitialRoute, reloadWebview } from './vscodeApi';
 /**
  * Safe lazy loader: wraps dynamic imports with error handling to prevent
  * chunk-loading failures (network issues, stale deployments) from crashing the app.
@@ -16,17 +16,34 @@ function safeLazy(importFn, moduleName = 'Module') {
       console.error(`[LazyLoad] Failed to load ${moduleName}:`, error);
       // Return a fallback component on chunk-load failure
       return {
-        default: () => (
-          <div className="flex items-center justify-center min-h-[40vh]">
-            <div className="text-center p-8 max-w-md">
-              <p className="text-lg font-bold mb-2">Failed to load {moduleName}</p>
-              <p className="text-sm opacity-50 mb-4">This may be due to a network issue. Please try refreshing.</p>
-              <button onClick={() => window.location.reload()} className="btn btn-primary btn-sm">
-                Reload Page
-              </button>
+        default: function LazyLoadError() {
+          return (
+            <div className="flex items-center justify-center min-h-[40vh] p-4 w-full">
+              <div className="text-center p-6 sm:p-8 max-w-md w-full rounded-2xl border border-base-300/40 bg-base-100">
+                <div className="w-16 h-16 rounded-2xl bg-warning/10 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">⚠️</span>
+                </div>
+                <p className="text-base font-bold mb-2">Failed to load {moduleName}</p>
+                <p className="text-sm opacity-50 mb-1">This may be due to a network issue.</p>
+                <p className="text-xs opacity-30 mb-5 break-all">{error?.message?.substring(0, 150) || 'Unknown error'}</p>
+                <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                  <button
+                    onClick={() => reloadWebview('/')}
+                    className="btn btn-primary btn-sm rounded-xl"
+                  >
+                    Reload Page
+                  </button>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="btn btn-ghost btn-sm rounded-xl"
+                  >
+                    Hard Refresh
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        ),
+          );
+        },
       };
     })
   );
@@ -53,7 +70,6 @@ const ColorPaletteGenerator = safeLazy(() => import('./tools/color-palette/Color
 const CssGradientGenerator = safeLazy(() => import('./tools/css-gradient/CssGradientGenerator'), 'CSS Gradient');
 const BoxShadowGenerator = safeLazy(() => import('./tools/box-shadow/BoxShadowGenerator'), 'Box Shadow');
 const GlassmorphismGenerator = safeLazy(() => import('./tools/glassmorphism/GlassmorphismGenerator'), 'Glassmorphism');
-const FrontendPlayground = safeLazy(() => import('./tools/frontend-playground/FrontendPlayground'), 'Frontend Playground');
 const GridGenerator = safeLazy(() => import('./tools/grid-generator/GridGenerator'), 'Grid Generator');
 /* Skeleton wrapper for tool pages — shows contextual skeleton instead of spinner */
 function ToolSkeleton({ children }) {
@@ -138,7 +154,6 @@ export default function App() {
             <Route path="/css-gradient" element={<ToolSkeleton><CssGradientGenerator /></ToolSkeleton>} />
             <Route path="/box-shadow" element={<ToolSkeleton><BoxShadowGenerator /></ToolSkeleton>} />
             <Route path="/glassmorphism" element={<ToolSkeleton><GlassmorphismGenerator /></ToolSkeleton>} />
-            <Route path="/frontend-playground" element={<ToolSkeleton><FrontendPlayground /></ToolSkeleton>} />
             <Route path="/grid-generator" element={<ToolSkeleton><GridGenerator /></ToolSkeleton>} />
 
             {/* Settings & Error Pages */}

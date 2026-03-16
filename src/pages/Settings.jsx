@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Settings as SettingsIcon, Palette, Monitor, Check,
-  Sun, Moon, Trash2, Database, Info, Sparkles,
+  Settings as SettingsIcon, Check,
+  Trash2, Database, Info,
   ExternalLink, Heart, Code2, Star,
   Globe, MapPin
 } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
 import { getTools } from '../utils/toolRegistry';
+import { isVsCodeWebview, openExternal } from '../vscodeApi';
 
 // ─── Inline SVG icons (Github & Twitter are deprecated in lucide-react) ───
 const GithubIcon = ({ size = 16, className = '' }) => (
@@ -29,33 +29,36 @@ const AUTHOR = {
 };
 
 export default function Settings() {
-  const { theme, setTheme, themes } = useTheme();
-  const [filter, setFilter] = useState('all');
   const [cleared, setCleared] = useState(false);
 
-  const filteredThemes = filter === 'all'
-    ? themes
-    : themes.filter((t) => t.category.toLowerCase() === filter);
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
 
   const handleClearData = () => {
     try {
-      if (window.confirm('Are you sure? This will clear all saved API collections, history, and settings.')) {
-        const currentTheme = theme;
-        try {
-          localStorage.clear();
-          localStorage.setItem('devtoolbox-theme', currentTheme);
-        } catch (storageErr) {
-          console.error('[Settings] Failed to clear localStorage:', storageErr);
-        }
-        setCleared(true);
-        setTimeout(() => setCleared(false), 3000);
-      }
+      // window.confirm() doesn't work in VS Code webview, so use inline confirmation
+      setShowConfirmClear(true);
     } catch (err) {
       console.error('[Settings] Error during data clear:', err);
     }
   };
 
-  const storageUsed = (() => {
+  const confirmClearData = () => {
+    try {
+      try {
+        localStorage.clear();
+      } catch (storageErr) {
+        console.error('[Settings] Failed to clear localStorage:', storageErr);
+      }
+      setCleared(true);
+      setShowConfirmClear(false);
+      setTimeout(() => setCleared(false), 3000);
+    } catch (err) {
+      console.error('[Settings] Error during data clear:', err);
+    }
+  };
+
+  // Calculate storage used — safely handles localStorage exceptions
+  const storageUsed = useMemo(() => {
     let total = 0;
     try {
       for (let i = 0; i < localStorage.length; i++) {
@@ -69,7 +72,12 @@ export default function Settings() {
       console.warn('[Settings] Error calculating storage size:', e);
     }
     return (total / 1024).toFixed(1);
-  })();
+  }, [cleared]); // Re-calculate after clearing data
+
+  // Safe localStorage.length that won't throw
+  const storageItemCount = useMemo(() => {
+    try { return localStorage.length; } catch { return 0; }
+  }, [cleared]);
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -89,143 +97,12 @@ export default function Settings() {
           Customize your WebToolkit experience
         </p>
       </motion.div>
-
-      {/* Appearance Section */}
+{/* Data & Storage Section */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.4 }}
-      >
-        <div className="rounded-xl glass-card glass-highlight p-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 backdrop-blur-sm flex items-center justify-center shrink-0 border border-primary/10">
-                <Palette size={18} className="text-primary" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold">Appearance</h2>
-                <p className="text-xs opacity-60">Choose a theme that suits your style</p>
-              </div>
-            </div>
-
-            {/* Active theme badge */}
-            <div className="badge badge-primary badge-lg gap-2 font-semibold shrink-0">
-              <Sparkles size={14} />
-              {themes.find(t => t.id === theme)?.emoji} {themes.find(t => t.id === theme)?.name || theme}
-            </div>
-          </div>
-
-          {/* Filter tabs with sliding indicator */}
-          <div className="flex gap-1.5 w-fit p-1.5 rounded-xl mb-6 overflow-x-auto glass-base !bg-base-200/40 relative">
-            {['all', 'light', 'dark'].map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-300 ${filter === f ? 'text-primary-content shadow-sm' : 'hover:bg-base-100 text-base-content'}`}
-              >
-                {filter === f && (
-                  <motion.div
-                    layoutId="settings-filter-pill"
-                    className="absolute inset-0 bg-primary rounded-lg"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-2">
-                  {f === 'all' && <Monitor size={14} />}
-                  {f === 'light' && <Sun size={14} />}
-                  {f === 'dark' && <Moon size={14} />}
-                  {f.charAt(0).toUpperCase() + f.slice(1)}
-                  <span className={`badge badge-xs ${filter === f ? 'bg-primary-content/20 text-primary-content border-0' : 'badge-ghost'}`}>
-                    {f === 'all' ? themes.length : themes.filter(t => t.category.toLowerCase() === f).length}
-                  </span>
-                </span>
-              </button>
-            ))}
-          </div>
-
-          {/* Theme grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
-            {filteredThemes.map((t, i) => {
-              const isActive = theme === t.id;
-              return (
-                <motion.button
-                  key={t.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.02, duration: 0.25 }}
-                  onClick={() => setTheme(t.id)}
-                  data-theme={t.id}
-                  className={`group relative rounded-xl overflow-hidden transition-all duration-200 hover:shadow-md ${
-                    isActive
-                      ? 'ring-2 ring-primary ring-offset-2 ring-offset-base-100 shadow-md'
-                      : 'border border-base-300 hover:border-primary/30'
-                  }`}
-                >
-                  {/* Theme preview with shine effect */}
-                  <div className="bg-base-100 p-3 relative overflow-hidden group-hover:after:animate-shine-sweep">
-                    {/* Color dots */}
-                    <div className="flex gap-1.5 mb-2.5">
-                      <div className="w-2.5 h-2.5 rounded-full bg-primary transition-transform duration-200 group-hover:scale-110" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-secondary transition-transform duration-200 group-hover:scale-110" style={{ transitionDelay: '50ms' }} />
-                      <div className="w-2.5 h-2.5 rounded-full bg-accent transition-transform duration-200 group-hover:scale-110" style={{ transitionDelay: '100ms' }} />
-                    </div>
-
-                    {/* Lines */}
-                    <div className="space-y-1.5">
-                      <div className="flex gap-1.5">
-                        <div className="h-2 flex-1 rounded-full bg-primary" />
-                        <div className="h-2 w-4 rounded-full bg-secondary" />
-                      </div>
-                      <div className="flex gap-1.5">
-                        <div className="h-2 w-6 rounded-full bg-base-300" />
-                        <div className="h-2 flex-1 rounded-full bg-accent" />
-                      </div>
-                      <div className="flex gap-1.5">
-                        <div className="h-2 flex-1 rounded-full bg-base-300" />
-                        <div className="h-2 w-8 rounded-full bg-primary" />
-                      </div>
-                    </div>
-
-                    {/* Color bar */}
-                    <div className="flex gap-1 mt-2.5">
-                      <div className="h-3 flex-1 rounded bg-primary opacity-20" />
-                      <div className="h-3 flex-1 rounded bg-secondary opacity-20" />
-                      <div className="h-3 flex-1 rounded bg-accent opacity-20" />
-                      <div className="h-3 flex-1 rounded bg-neutral opacity-20" />
-                    </div>
-                  </div>
-
-                  {/* Theme label */}
-                  <div className="bg-base-200 px-3 py-2 flex items-center gap-2">
-                    <span className="text-xs">{t.emoji}</span>
-                    <span className="text-xs font-semibold text-base-content truncate">{t.name}</span>
-                    {isActive && (
-                      <Check size={14} className="ml-auto text-primary shrink-0" />
-                    )}
-                  </div>
-
-                  {/* Active indicator */}
-                  {isActive && (
-                    <div className="absolute top-1.5 right-1.5 z-10">
-                      <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-sm">
-                        <Check size={10} className="text-primary-content" />
-                      </div>
-                    </div>
-                  )}
-                </motion.button>
-              );
-            })}
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Data & Storage Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.4 }}
-      >
-<div className="rounded-xl glass-card glass-highlight p-6">
+      ><div className="rounded-xl glass-card glass-highlight p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-9 h-9 rounded-lg bg-warning/10 backdrop-blur-sm flex items-center justify-center border border-warning/10">
               <Database size={18} className="text-warning" />
@@ -255,7 +132,7 @@ export default function Settings() {
                   className="h-full bg-primary/60 rounded-full"
                 />
               </div>
-              <p className="text-[11px] opacity-40 mt-1.5">API history, collections, theme prefs</p>
+              <p className="text-[11px] opacity-40 mt-1.5">API history, collections, preferences</p>
             </div>
             <div className="rounded-xl glass-base !bg-base-200/30 p-4 group/card hover:!bg-base-200/50 transition-colors duration-200">
               <div className="flex items-center justify-between mb-2">
@@ -263,42 +140,63 @@ export default function Settings() {
                 <Info size={16} className="text-secondary opacity-40 group-hover/card:opacity-70 transition-opacity duration-200" />
               </div>
               <p className="text-2xl font-bold">
-                {localStorage.length}
+                {storageItemCount}
               </p>
               <p className="text-[11px] opacity-40 mt-1">Keys stored in browser</p>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={handleClearData}
-              className="btn btn-error btn-sm gap-2.5 rounded-xl"
-            >
-              <Trash2 size={14} />
-              Clear All Data
-            </button>
-
-            {cleared && (
-              <motion.div
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="alert alert-success py-2 px-4"
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={handleClearData}
+                className="btn btn-error btn-sm gap-2.5 rounded-xl"
               >
-                <Check size={16} />
-                <span className="text-sm font-medium">All data cleared successfully!</span>
+                <Trash2 size={14} />
+                Clear All Data
+              </button>
+
+              {cleared && (
+                <motion.div
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="alert alert-success py-2 px-4"
+                >
+                  <Check size={16} />
+                  <span className="text-sm font-medium">All data cleared successfully!</span>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Inline confirmation dialog (replaces window.confirm which doesn't work in VS Code webview) */}
+            {showConfirmClear && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl border border-error/20 bg-error/5 p-4"
+              >
+                <p className="text-sm font-semibold mb-1">Are you sure?</p>
+                <p className="text-xs opacity-60 mb-3">This will clear all saved API collections, history, and settings. This action cannot be undone.</p>
+                <div className="flex gap-2">
+                  <button onClick={confirmClearData} className="btn btn-error btn-xs gap-1.5 rounded-lg">
+                    <Trash2 size={12} />
+                    Yes, Clear All
+                  </button>
+                  <button onClick={() => setShowConfirmClear(false)} className="btn btn-ghost btn-xs rounded-lg">
+                    Cancel
+                  </button>
+                </div>
               </motion.div>
             )}
           </div>
         </div>
       </motion.div>
-
-      {/* ─── Author / Creator Section ─── */}
+{/* ─── Author / Creator Section ─── */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.4 }}
-      >
-        <div className="rounded-xl glass-card overflow-hidden gradient-border-hover">
+        transition={{ delay: 0.2, duration: 0.4 }}
+      >        <div className="rounded-xl glass-card overflow-hidden gradient-border-hover">
           {/* Author Header Banner */}
           <div className="relative h-28 sm:h-32 overflow-hidden group/banner">
             <div
@@ -327,15 +225,16 @@ export default function Settings() {
             {/* Avatar - overlapping banner */}
             <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12 sm:-mt-10 mb-5">
               <div className="relative shrink-0">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden ring-4 ring-base-100 shadow-xl">
+<div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden ring-4 ring-base-100 shadow-xl bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
                   <img
                     src={AUTHOR.avatar}
                     alt={AUTHOR.name}
                     className="w-full h-full object-cover"
                     loading="lazy"
+                    width={96}
+                    height={96}
                     onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(AUTHOR.name)}&size=96&background=2D79FF&color=fff&bold=true`;
+                      try { e.target.onerror = null; e.target.style.display = 'none'; } catch { /* safe */ }
                     }}
                   />
                 </div>
@@ -378,6 +277,7 @@ export default function Settings() {
                 href={AUTHOR.github}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => { if (isVsCodeWebview()) { e.preventDefault(); openExternal(AUTHOR.github); } }}
                 className="btn btn-sm gap-2.5 rounded-xl bg-neutral text-neutral-content hover:bg-neutral/80 border-0 shadow-sm hover:shadow-lg hover:shadow-black/15 transition-all duration-200 hover:-translate-y-0.5"
               >
                 <GithubIcon size={15} />
@@ -388,6 +288,7 @@ export default function Settings() {
                 href={AUTHOR.portfolio}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => { if (isVsCodeWebview()) { e.preventDefault(); openExternal(AUTHOR.portfolio); } }}
                 className="btn btn-sm gap-2.5 rounded-xl btn-primary shadow-sm hover:shadow-lg hover:shadow-primary/25 transition-all duration-200 hover:-translate-y-0.5"
               >
                 <Globe size={15} />
@@ -409,9 +310,10 @@ export default function Settings() {
                 <p className="text-xs opacity-50">Star the repo on GitHub to show your support and help others discover it!</p>
               </div>
               <a
-                href={`${AUTHOR.github}/Developer-Toolbox`}
+                href={`${AUTHOR.github}/Toolkit-Extension`}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => { if (isVsCodeWebview()) { e.preventDefault(); openExternal(`${AUTHOR.github}/Toolkit-Extension`); } }}
                 className="btn btn-sm btn-primary rounded-xl gap-2.5 shrink-0 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200"
               >
                 <Star size={14} />
@@ -421,14 +323,12 @@ export default function Settings() {
           </div>
         </div>
       </motion.div>
-
-      {/* About Section */}
+{/* About Section */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.4 }}
-      >
-        <div className="rounded-xl glass-card glass-highlight p-6">
+        transition={{ delay: 0.3, duration: 0.4 }}
+      >        <div className="rounded-xl glass-card glass-highlight p-6">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-9 h-9 rounded-lg bg-info/10 backdrop-blur-sm flex items-center justify-center border border-info/10">
               <Info size={18} className="text-info" />
@@ -443,7 +343,7 @@ export default function Settings() {
             <table className="table table-sm">
               <tbody>
                 <tr><td className="font-semibold opacity-70">Total Tools</td><td>{getTools().filter(t => t.id !== 'settings').length} developer tools</td></tr>
-                <tr><td className="font-semibold opacity-70">Available Themes</td><td>{themes.length} themes</td></tr>
+                <tr><td className="font-semibold opacity-70">Theme</td><td>Auto-synced with VS Code editor theme</td></tr>
                 <tr><td className="font-semibold opacity-70">Privacy</td><td>100% client-side — no data sent to any server</td></tr>
                 <tr><td className="font-semibold opacity-70">Storage</td><td>Browser LocalStorage only</td></tr>
               </tbody>
@@ -458,6 +358,7 @@ export default function Settings() {
                 href={AUTHOR.github}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => { if (isVsCodeWebview()) { e.preventDefault(); openExternal(AUTHOR.github); } }}
                 className="font-semibold text-primary hover:underline"
               >
                 {AUTHOR.name}
@@ -467,6 +368,7 @@ export default function Settings() {
                 href={AUTHOR.github}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => { if (isVsCodeWebview()) { e.preventDefault(); openExternal(AUTHOR.github); } }}
                 className="opacity-60 hover:opacity-100 transition-opacity"
               >
                 <GithubIcon size={12} />
@@ -475,6 +377,7 @@ export default function Settings() {
                 href={AUTHOR.portfolio}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => { if (isVsCodeWebview()) { e.preventDefault(); openExternal(AUTHOR.portfolio); } }}
                 className="opacity-60 hover:opacity-100 transition-opacity"
               >
                 <Globe size={12} />

@@ -6,6 +6,7 @@ import {
   Search, X, Command, Heart, TrendingUp,
 } from 'lucide-react';
 import { getTools, CATEGORIES, getToolsByCategory, searchTools } from '../utils/toolRegistry';
+import { isVsCodeWebview, openExternal } from '../vscodeApi';
 import SEO from '../components/SEO';
 
 const containerVariants = {
@@ -93,7 +94,7 @@ export default function Dashboard() {
         description={`Browse ${tools.length} free, fast, and privacy-first developer utilities — all running client-side.`}
         keywords="developer dashboard, tool collection, utilities, web development tools"
       />
-      <div className="max-w-6xl mx-auto" role="main">
+      <div className="max-w-6xl mx-auto w-full" role="main">
         {/* ── Hero Section ── */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -102,17 +103,13 @@ export default function Dashboard() {
         className="relative text-center mb-12 pt-4 pb-8"
       >
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-          <motion.div
+          <div
             className="absolute top-0 left-1/4 w-72 h-72 rounded-full opacity-[0.04] blur-3xl"
             style={{ background: 'var(--color-primary)' }}
-            animate={{ x: [0, 15, -10, 0], y: [0, -10, 8, 0] }}
-            transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
           />
-          <motion.div
+          <div
             className="absolute top-8 right-1/4 w-56 h-56 rounded-full opacity-[0.03] blur-3xl"
             style={{ background: 'var(--color-secondary, var(--color-primary))' }}
-            animate={{ x: [0, -12, 15, 0], y: [0, 8, -12, 0] }}
-            transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
           />
         </div>
 
@@ -230,7 +227,7 @@ export default function Dashboard() {
       )}
 
       {/* ── Category Filter Pills ── */}
-      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-6 -mx-1 px-1 overflow-x-auto pb-2 sm:pb-0 sm:overflow-visible scrollbar-thin">
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-6 -mx-1 px-1 overflow-x-auto pb-2 sm:pb-0 scrollbar-thin" role="tablist" aria-label="Filter tools by category">
         <button
           onClick={() => setSelectedCategory('all')}
           className={`btn btn-sm rounded-xl gap-2 transition-all duration-200 ${
@@ -333,17 +330,15 @@ export default function Dashboard() {
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="text-center py-24"
         >
-          <motion.div
-            animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          <div
             className="w-20 h-20 rounded-2xl bg-base-200/80 flex items-center justify-center mx-auto mb-5 relative"
           >
             <Search size={28} className="opacity-20" />
             <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-warning/20 flex items-center justify-center">
               <X size={10} className="text-warning" />
             </div>
-          </motion.div>
-          <p className="text-base font-semibold opacity-50 mb-1">No tools found for "{query}"</p>
+          </div>
+          <p className="text-base font-semibold opacity-50 mb-1 max-w-md mx-auto break-words">No tools found for &ldquo;<span className="inline-block max-w-[200px] truncate align-bottom break-all">{query.slice(0, 60)}</span>&rdquo;</p>
           <p className="text-sm opacity-30 mb-6">Try a different search term or browse categories</p>
           <button onClick={() => { setQuery(''); setSelectedCategory('all'); }} className="btn btn-sm btn-primary btn-outline rounded-xl gap-2.5">
             <Sparkles size={13} />
@@ -361,17 +356,19 @@ export default function Dashboard() {
             href="https://github.com/PooranaSelvan"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={(e) => { if (isVsCodeWebview()) { e.preventDefault(); openExternal('https://github.com/PooranaSelvan'); } }}
             className="group inline-flex items-center gap-3 px-5 py-3 rounded-2xl border border-base-300/40 bg-base-100/80 hover:border-primary/20 hover:shadow-lg transition-all duration-200"
           >
-            <div className="w-9 h-9 rounded-xl overflow-hidden ring-2 ring-base-300/40 group-hover:ring-primary/30 transition-colors duration-200 shrink-0">
+            <div className="w-9 h-9 rounded-xl overflow-hidden ring-2 ring-base-300/40 group-hover:ring-primary/30 transition-colors duration-200 shrink-0 bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
               <img
-                src="https://avatars.githubusercontent.com/u/130943602?v=4"
-                alt="Poorana Selvan"
+                src="https://avatars.githubusercontent.com/u/130943602?v=4&s=72"
+                alt=""
                 className="w-full h-full object-cover"
                 loading="lazy"
+                width={36}
+                height={36}
                 onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = 'https://ui-avatars.com/api/?name=PS&size=36&background=2D79FF&color=fff&bold=true';
+                  try { e.target.onerror = null; e.target.style.display = 'none'; } catch { /* safe */ }
                 }}
               />
             </div>

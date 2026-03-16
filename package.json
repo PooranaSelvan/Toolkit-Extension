@@ -1,21 +1,21 @@
 {
   "name": "developer-toolbox",
-  "displayName": "Developer Toolbox",
-  "description": "All-in-one developer utilities — 18+ tools including API Tester, JSON Formatter, Color Palette, Regex Generator, JWT Decoder, SQL Playground, and more. All running directly inside VS Code.",
-  "version": "1.0.0",
-  "publisher": "PooranaSelvan",
+  "displayName": "WebToolKit Toolbox",
+  "description": "All-in-one developer utilities — 17+ tools including API Tester, JSON Formatter, Color Palette, Regex Generator, JWT Decoder, SQL Playground, and more. All running directly inside VS Code.",
+  "version": "1.5.2",
+  "publisher": "developer-toolbox",
   "license": "MIT",
   "icon": "assets/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/PooranaSelvan/developer-toolbox"
+    "url": "https://github.com/PooranaSelvan/Toolkit-Extension"
   },
   "bugs": {
-    "url": "https://github.com/PooranaSelvan/developer-toolbox/issues"
+    "url": "https://github.com/PooranaSelvan/Toolkit-Extension/issues"
   },
-  "homepage": "https://github.com/PooranaSelvan/developer-toolbox#readme",
+  "homepage": "https://github.com/PooranaSelvan/Toolkit-Extension#readme",
   "engines": {
-    "vscode": "^1.96.0"
+    "vscode": "^1.51.0"
   },
   "categories": [
     "Other",
@@ -141,16 +141,6 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
-    "@codemirror/autocomplete": "^6.20.1",
-    "@codemirror/commands": "^6.10.2",
-    "@codemirror/lang-css": "^6.3.1",
-    "@codemirror/lang-html": "^6.4.11",
-    "@codemirror/lang-javascript": "^6.2.5",
-    "@codemirror/language": "^6.12.2",
-    "@codemirror/search": "^6.6.0",
-    "@codemirror/state": "^6.5.4",
-    "@codemirror/view": "^6.39.16",
-    "@lezer/highlight": "^1.2.3",
     "axios": "^1.13.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -173,9 +163,11 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "@types/vscode": "^1.96.0",
+    "@types/vscode": "^1.51.0",
     "@vitejs/plugin-react": "^4.7.0",
     "@vscode/vsce": "^3.7.1",
     "autoprefixer": "^10.4.27",
@@ -185,8 +177,10 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "jsdom": "^29.0.0",
     "postcss": "^8.5.8",
     "tailwindcss": "^3.4.19",
-    "vite": "^5.4.21"
+    "vite": "^5.4.21",
+    "vitest": "^4.1.0"
   }
 }

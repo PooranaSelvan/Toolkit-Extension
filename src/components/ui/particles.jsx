@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 
 export function Particles({
@@ -17,6 +17,7 @@ export function Particles({
   const circles = useRef([]);
   const mouse = useRef({ x: 0, y: 0 });
   const canvasSize = useRef({ w: 0, h: 0 });
+  const animationFrameRef = useRef(null);
   const dpr = typeof window !== "undefined" ? window.devicePixelRatio : 1;
 
   const resizeCanvas = useCallback(() => {
@@ -144,7 +145,8 @@ export function Particles({
         drawCircle({ ...circle }, true);
       }
     });
-    requestAnimationFrame(animate);
+    // Track the latest frame ID in a ref so it can be properly cancelled on unmount
+    animationFrameRef.current = requestAnimationFrame(animate);
   }, [circleParams, drawCircle, ease, staticity, vx, vy]);
 
   useEffect(() => {
@@ -152,13 +154,17 @@ export function Particles({
       context.current = canvasRef.current.getContext("2d");
     }
     initCanvas();
-    const animationFrame = requestAnimationFrame(animate);
+    // Start the animation loop — subsequent frame IDs are tracked via animationFrameRef
+    animationFrameRef.current = requestAnimationFrame(animate);
 
     const handleResize = () => initCanvas();
     window.addEventListener("resize", handleResize);
 
     return () => {
-      cancelAnimationFrame(animationFrame);
+      // Cancel the latest queued frame (stops the recursive rAF loop)
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
       window.removeEventListener("resize", handleResize);
     };
   }, [animate, initCanvas]);

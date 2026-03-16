@@ -149,6 +149,18 @@ export function onMessage(handler) {
 }
 
 /**
+ * Reload the webview by requesting the extension host to recreate its HTML.
+ * Falls back to window.location.reload() in browser context.
+ */
+export function reloadWebview(route = '/') {
+  if (isVsCodeWebview()) {
+    postMessage({ type: 'reloadWebview', route });
+  } else {
+    window.location.reload();
+  }
+}
+
+/**
  * Get the initial route (set by extension when opening a specific tool)
  */
 export function getInitialRoute() {
@@ -170,4 +182,5 @@ export default {
   saveFile,
   onMessage,
   getInitialRoute,
+  reloadWebview,
 };

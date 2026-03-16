@@ -1,15 +1,13 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wrench, ChevronRight, ChevronDown, X, Sparkles, Search, Home, LayoutDashboard } from 'lucide-react';
 import { getTools, CATEGORIES, getToolsByCategory, searchTools } from '../utils/toolRegistry';
-import { useTheme } from '../contexts/ThemeContext';
 import { isVsCodeWebview, openExternal } from '../vscodeApi';
+import { APP_VERSION } from '../constants/version';
 
 export default function Sidebar({ isOpen, onClose }) {
-  const tools = getTools();
-  const { theme, themes } = useTheme();
-  const currentTheme = themes.find((t) => t.id === theme);
+  const tools = useMemo(() => getTools(), []);
   const toolCount = tools.filter((t) => t.id !== 'settings').length;
   const location = useLocation();
   const navigate = useNavigate();
@@ -25,8 +23,10 @@ export default function Sidebar({ isOpen, onClose }) {
     if (currentTool && currentTool.category !== 'preferences') {
       openSet.add(currentTool.category);
     }
-    if (openSet.size === 0 && sidebarCategories.length > 0) {
-      openSet.add(sidebarCategories[0].id);
+    // Default: open all categories so tools are immediately accessible
+    // without requiring users to expand categories first
+    if (openSet.size === 0) {
+      sidebarCategories.forEach((c) => openSet.add(c.id));
     }
     return openSet;
   };
@@ -65,26 +65,45 @@ export default function Sidebar({ isOpen, onClose }) {
     }
   }, [onClose]);
 
-  // Close sidebar on escape key
+  // Keyboard shortcuts: Escape closes sidebar, / focuses sidebar search
   useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (sidebarSearch) {
+          setSidebarSearch('');
+          sidebarSearchRef.current?.blur();
+        } else if (isOpen) {
+          onClose();
+        }
+      }
+      // "/" key focuses sidebar search when not already typing in an input
+      if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const tag = document.activeElement?.tagName?.toLowerCase();
+        if (tag !== 'input' && tag !== 'textarea' && tag !== 'select' && !document.activeElement?.isContentEditable) {
+          e.preventDefault();
+          sidebarSearchRef.current?.focus();
+        }
       }
     };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose, sidebarSearch]);
 
-  // Prevent body scroll when sidebar is open on mobile
+  // Prevent body scroll when sidebar is open on mobile.
+  // Uses class-based approach for safer cleanup — avoids inline style conflicts.
   useEffect(() => {
-    if (isOpen && window.innerWidth < 1024) {
-      document.body.style.overflow = 'hidden';
+    if (typeof window === 'undefined') return;
+    const isNarrow = window.innerWidth < 1024;
+    if (isOpen && isNarrow) {
+      document.body.classList.add('sidebar-body-lock');
+      document.documentElement.classList.add('sidebar-body-lock');
     } else {
-      document.body.style.overflow = '';
+      document.body.classList.remove('sidebar-body-lock');
+      document.documentElement.classList.remove('sidebar-body-lock');
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.classList.remove('sidebar-body-lock');
+      document.documentElement.classList.remove('sidebar-body-lock');
     };
   }, [isOpen]);
 
@@ -95,9 +114,10 @@ export default function Sidebar({ isOpen, onClose }) {
 
   return (
     <aside
+      id="sidebar-nav"
       role="navigation"
       aria-label="Main navigation"
-      className={`fixed left-0 top-0 bottom-0 w-[272px] bg-base-100/95 backdrop-blur-xl border-r border-base-300/40 flex flex-col z-40 transition-transform duration-300 ease-out lg:translate-x-0 shadow-2xl lg:shadow-lg ${
+      className={`fixed left-0 top-0 bottom-0 w-[272px] bg-base-100 border-r border-base-300/40 flex flex-col z-40 transition-transform duration-300 ease-out lg:translate-x-0 shadow-2xl lg:shadow-lg ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}
     >
@@ -122,60 +142,69 @@ export default function Sidebar({ isOpen, onClose }) {
       </div>
 
       {/* ── Sidebar Quick Search ── */}
-      <div className="px-3 pt-3 pb-1 shrink-0">
+      <div className="px-3 pt-3 pb-1 shrink-0 relative z-10">
         <div className="relative group/search">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-30 transition-all duration-200 group-focus-within/search:opacity-60 group-focus-within/search:text-primary" />
           <input
             ref={sidebarSearchRef}
             type="text"
             value={sidebarSearch}
-            onChange={(e) => setSidebarSearch(e.target.value)}
+            onChange={(e) => setSidebarSearch(e.target.value.slice(0, 100))}
             placeholder="Quick find..."
             aria-label="Search tools"
+            maxLength={100}
             className="input input-sm w-full pl-8 pr-14 rounded-xl bg-base-200/50 border-base-300/30 h-8 text-xs placeholder:text-base-content/30 focus:bg-base-100 focus:shadow-[0_0_0_3px] focus:shadow-primary/10 transition-shadow duration-200"
           />
           {sidebarSearch ? (
             <button 
               onClick={() => setSidebarSearch('')} 
-              className="absolute right-2 top-1/2 -translate-y-1/2 opacity-30 hover:opacity-60"
+              className="absolute right-2 top-1/2 -translate-y-1/2 opacity-30 hover:opacity-60 p-0.5"
               aria-label="Clear search"
             >
               <X size={12} />
             </button>
           ) : (
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 kbd-hint pointer-events-none">/</span>
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 kbd-hint pointer-events-none select-none">/</span>
           )}
         </div>
 
-        {/* Quick search results overlay */}
+        {/* Quick search results overlay — absolute positioned to float above nav
+            without pushing it down or blocking interaction with tool links */}
         <AnimatePresence>
           {sidebarResults.length > 0 && (
             <motion.div
-              initial={{ opacity: 0, y: -4, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -4, scale: 0.98 }}
-              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-1.5 rounded-xl border border-base-300/40 bg-base-100 shadow-lg overflow-hidden"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15 }}
+              className="absolute left-3 right-3 mt-1.5 rounded-xl border border-base-300/40 bg-base-100 shadow-lg overflow-hidden max-h-[280px] overflow-y-auto scrollbar-thin z-50"
+              role="listbox"
+              aria-label="Search results"
             >
-              {sidebarResults.map((tool, idx) => {
+              {sidebarResults.map((tool) => {
                 const Icon = tool.icon;
                 return (
-                  <motion.button
+                  <button
                     key={tool.id}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.03, duration: 0.2 }}
                     onClick={() => { navigate(tool.path); handleNavClick(); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-primary/[0.06] transition-colors duration-150"
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-primary/[0.06] transition-colors duration-150 focus:bg-primary/[0.06] outline-none"
+                    role="option"
                   >
                     <Icon size={14} className="text-primary opacity-60 shrink-0" />
                     <span className="text-xs font-medium truncate">{tool.name}</span>
-                  </motion.button>
+                  </button>
                 );
               })}
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* No results feedback */}
+        {sidebarSearch.trim() && sidebarResults.length === 0 && (
+          <div className="mt-1.5 px-3 py-3 text-center">
+            <p className="text-[11px] opacity-30">No tools found</p>
+          </div>
+        )}
       </div>
 
 {/* Navigation */}
@@ -277,73 +306,54 @@ export default function Sidebar({ isOpen, onClose }) {
                 />
               </button>
 
-              {/* Category tools with animated expand/collapse */}
-              <AnimatePresence initial={false}>
-                {isExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                    className="overflow-hidden"
-                  >
-                    <div className="space-y-0.5 pt-1 pb-2 pl-1">
-                      {categoryTools.map((tool, toolIdx) => {
-                        const Icon = tool.icon;
-                        return (
-                          <motion.div
-                            key={tool.id}
-                            initial={{ opacity: 0, x: -8 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: toolIdx * 0.03, duration: 0.2 }}
-                          >
-                            <NavLink
-                              to={tool.path}
-                              onClick={handleNavClick}
-                              className={({ isActive }) =>
-                                `group/link relative flex items-center gap-2.5 px-3 py-[9px] rounded-xl text-[13px] font-medium transition-all duration-200 ${
-                                  isActive
-                                    ? 'bg-primary/[0.08] text-primary font-semibold shadow-sm'
-                                    : 'text-base-content/55 hover:text-base-content/80 hover:bg-base-200/60'
-                                }`
-                              }
+              {/* Category tools — simple show/hide to avoid animation-related
+                  click-blocking and reduce per-frame layout recalculations */}
+              {isExpanded && (
+                <div className="space-y-0.5 pt-1 pb-2 pl-1">
+                  {categoryTools.map((tool) => {
+                    const Icon = tool.icon;
+                    return (
+                      <NavLink
+                        key={tool.id}
+                        to={tool.path}
+                        onClick={handleNavClick}
+                        className={({ isActive }) =>
+                          `group/link relative flex items-center gap-2.5 px-3 py-[9px] rounded-xl text-[13px] font-medium transition-colors duration-200 ${
+                            isActive
+                              ? 'bg-primary/[0.08] text-primary font-semibold shadow-sm'
+                              : 'text-base-content/55 hover:text-base-content/80 hover:bg-base-200/60'
+                          }`
+                        }
+                      >
+                        {({ isActive }) => (
+                          <>
+                            {isActive && (
+                              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-r-full" />
+                            )}
+                            <div
+                              className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors duration-200 shrink-0 ${
+                                isActive
+                                  ? 'bg-primary/12 text-primary'
+                                  : 'text-base-content/40 group-hover/link:bg-base-200/80 group-hover/link:text-base-content/60'
+                              }`}
                             >
-                              {({ isActive }) => (
-                                <>
-                                  {isActive && (
-                                    <motion.div
-                                      layoutId="sidebar-active-bar"
-                                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-r-full"
-                                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                                    />
-                                  )}
-                                  <div
-                                    className={`flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-200 shrink-0 ${
-                                      isActive
-                                        ? 'bg-primary/12 text-primary'
-                                        : 'text-base-content/40 group-hover/link:bg-base-200/80 group-hover/link:text-base-content/60'
-                                    }`}
-                                  >
-                                    <Icon size={15} strokeWidth={isActive ? 2.2 : 1.8} />
-                                  </div>
-                                  <span className="flex-1 truncate">{tool.name}</span>
-                                  <ChevronRight
-                                    size={13}
-                                    strokeWidth={2}
-                                    className={`shrink-0 transition-all duration-200 ${
-                                      isActive ? 'opacity-40' : 'opacity-0 group-hover/link:opacity-30 group-hover/link:translate-x-0.5'
-                                    }`}
-                                  />
-                                </>
-                              )}
-                            </NavLink>
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                              <Icon size={15} strokeWidth={isActive ? 2.2 : 1.8} />
+                            </div>
+                            <span className="flex-1 truncate">{tool.name}</span>
+                            <ChevronRight
+                              size={13}
+                              strokeWidth={2}
+                              className={`shrink-0 transition-opacity duration-200 ${
+                                isActive ? 'opacity-40' : 'opacity-0 group-hover/link:opacity-30'
+                              }`}
+                            />
+                          </>
+                        )}
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}
@@ -406,15 +416,20 @@ export default function Sidebar({ isOpen, onClose }) {
           onClick={(e) => { if (isVsCodeWebview()) { e.preventDefault(); openExternal('https://github.com/PooranaSelvan'); } }}
           className="flex items-center gap-2.5 px-1.5 py-1.5 -mx-1 rounded-xl hover:bg-base-200/60 transition-all duration-200 group/author"
         >
-          <div className="w-7 h-7 rounded-lg overflow-hidden ring-1 ring-base-300/50 shrink-0 group-hover/author:ring-primary/30 transition-all duration-200 shadow-sm">
+          <div className="w-7 h-7 rounded-lg overflow-hidden ring-1 ring-base-300/50 shrink-0 group-hover/author:ring-primary/30 transition-all duration-200 shadow-sm bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
             <img
-              src="https://avatars.githubusercontent.com/u/130943602?v=4"
+              src="https://avatars.githubusercontent.com/u/130943602?v=4&s=56"
               alt="Poorana Selvan"
               className="w-full h-full object-cover"
               loading="lazy"
+              decoding="async"
+              width={28}
+              height={28}
               onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = 'https://ui-avatars.com/api/?name=PS&size=28&background=2D79FF&color=fff&bold=true&font-size=0.45';
+                try {
+                  e.target.onerror = null;
+                  e.target.style.display = 'none';
+                } catch { /* safe */ }
               }}
             />
           </div>
@@ -432,25 +447,11 @@ export default function Sidebar({ isOpen, onClose }) {
         </a>
 
         {/* Version & tool count */}
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-[10px]">{currentTheme?.emoji}</span>
-            <p className="text-[10px] text-base-content/20 font-medium truncate">
-              {currentTheme?.name || theme}
-            </p>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="badge badge-ghost badge-xs text-base-content/20 font-mono text-[9px]">v4.0</div>
-            <motion.div
-              key={toolCount}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-              className="badge badge-primary badge-xs gap-1 font-bold shadow-sm shadow-primary/15"
-            >
-              <Sparkles size={8} />
-              {toolCount}
-            </motion.div>
+        <div className="flex items-center justify-end px-1 gap-1.5">
+          <div className="badge badge-ghost badge-xs text-base-content/20 font-mono text-[9px]">v{APP_VERSION}</div>
+          <div className="badge badge-primary badge-xs gap-1 font-bold shadow-sm shadow-primary/15">
+            <Sparkles size={8} />
+            {toolCount}
           </div>
         </div>
       </div>

@@ -9,10 +9,10 @@ import { useState, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Braces, Copy, Check, Trash2, Download, Upload, Sparkles,
-  Minimize2, Maximize2, ArrowLeftRight, AlertTriangle, Info,
-  ChevronDown, ChevronUp, Search, X, FileJson, GitCompare,
-  RefreshCw, Code, Eye, TreePine, Hash, Type, ToggleLeft,
-  List, Layers, Filter, SortAsc, FileText, Diff,
+  Minimize2, Maximize2, ArrowLeftRight, AlertTriangle,
+  ChevronDown, ChevronUp, Search, X, FileJson,
+  Code, TreePine, Hash, Type, ToggleLeft,
+  List, Layers, SortAsc, Diff,
 } from 'lucide-react';
 import useCopyToClipboard from '../../hooks/useCopyToClipboard';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -24,7 +24,7 @@ const SAMPLE_JSON = [
   { name: 'Nested Array', json: '{"matrix":[[1,2,3],[4,5,6],[7,8,9]],"tags":["javascript","react","nodejs"],"metadata":{"version":"2.0","features":["search","filter","sort"]}}' },
 ];
 
-function analyzeJson(obj, path = '') {
+function analyzeJson(obj) {
   const stats = { strings: 0, numbers: 0, booleans: 0, nulls: 0, arrays: 0, objects: 0, totalKeys: 0, maxDepth: 0 };
 
   function traverse(val, depth) {
@@ -154,7 +154,7 @@ export default function JsonFormatter() {
   const [indentSize, setIndentSize] = useState(2);
   const [activeTab, setActiveTab] = useState('format');
   const [searchTerm, setSearchTerm] = useState('');
-  const [history, setHistory] = useLocalStorage('json-formatter-history', []);
+  const [, setHistory] = useLocalStorage('json-formatter-history', []);
   const { copied, copyToClipboard } = useCopyToClipboard();
   const fileInputRef = useRef(null);
 
@@ -221,11 +221,17 @@ export default function JsonFormatter() {
 
   const handlePaste = useCallback(async () => {
     try {
-      const text = await navigator.clipboard.readText();
-      if (text) setInput(text);
-    } catch (err) {
-      console.warn('Clipboard paste failed:', err?.message || 'Access denied. Use Ctrl+V to paste manually.');
+      // navigator.clipboard.readText() is not available in VS Code webview
+      // due to security restrictions. Use the Clipboard API with fallback.
+      if (navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+        const text = await navigator.clipboard.readText();
+        if (text) { setInput(text); return; }
+      }
+    } catch {
+      // Clipboard API denied — expected in VS Code webview, fall through silently
     }
+    // Show a user-friendly hint when paste fails (VS Code webview or permission denied)
+    console.info('[JsonFormatter] Use Ctrl+V / Cmd+V to paste from clipboard (direct clipboard access is restricted).');
   }, []);
 
   const handleExport = useCallback(() => {

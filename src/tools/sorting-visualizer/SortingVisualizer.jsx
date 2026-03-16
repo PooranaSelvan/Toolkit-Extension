@@ -225,7 +225,7 @@ const GENERATORS = { selection: selectionSortSteps, bubble: bubbleSortSteps, ins
 const audioCtxRef = { current: null };
 function playTone(value, max = 100) {
   try {
-    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || /** @type {typeof AudioContext} */ (window).webkitAudioContext)();
     const ctx = audioCtxRef.current;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -381,7 +381,7 @@ export default function SortingVisualizer() {
   useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
   useEffect(() => { reset(); }, [algo, reset]);
   useEffect(() => { reset(); setArray(generateArray(arraySize, arrayType)); }, [arraySize, arrayType, reset]);
-  useEffect(() => { if (playing) startTimer(speed); }, [speed]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (playing) startTimer(speed); }, [speed, playing, startTimer]);
 
   // ── Legend ─────────────────────────────────────────────────────────
   const legend = [

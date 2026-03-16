@@ -36,10 +36,10 @@ export default function EmptyState({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className={`text-center py-16 px-4 ${className}`}
+      className={`text-center py-16 px-4 w-full ${className}`}
       role="status"
     >
-      <div className="max-w-md mx-auto">
+      <div className="max-w-md mx-auto w-full">
         <motion.div
           animate={{ y: [0, -6, 0] }}
           transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}

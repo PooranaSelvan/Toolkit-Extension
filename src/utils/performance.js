@@ -3,16 +3,22 @@
  */
 
 // Debounce function for performance optimization
+// Returns a debounced function with a .cancel() method for cleanup in useEffect
 export function debounce(func, wait = 300) {
   let timeout;
-  return function executedFunction(...args) {
+  function executedFunction(...args) {
     const later = () => {
       clearTimeout(timeout);
       func(...args);
     };
     clearTimeout(timeout);
     timeout = setTimeout(later, wait);
+  }
+  executedFunction.cancel = () => {
+    clearTimeout(timeout);
+    timeout = null;
   };
+  return executedFunction;
 }
 
 // Throttle function for performance optimization
@@ -27,30 +33,42 @@ export function throttle(func, limit = 300) {
   };
 }
 
-// Lazy load images
+// Shared IntersectionObserver singleton for lazy loading images (one observer for all images)
+let _sharedImageObserver = null;
+
+function getSharedImageObserver() {
+  if (_sharedImageObserver) return _sharedImageObserver;
+  if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return null;
+
+  _sharedImageObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      try {
+        if (entry.isIntersecting) {
+          const image = entry.target;
+          if (image.dataset.src) {
+            image.src = image.dataset.src;
+            image.classList.add('loaded');
+          }
+          _sharedImageObserver.unobserve(image);
+        }
+      } catch (err) {
+        console.warn('[LazyLoad] Error processing intersection entry:', err);
+      }
+    });
+  });
+
+  return _sharedImageObserver;
+}
+
+// Lazy load images using a shared observer
 export function lazyLoadImage(img) {
   try {
     if (!img) return;
-    if ('IntersectionObserver' in window) {
-      const imageObserver = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          try {
-            if (entry.isIntersecting) {
-              const image = entry.target;
-              if (image.dataset.src) {
-                image.src = image.dataset.src;
-                image.classList.add('loaded');
-              }
-              imageObserver.unobserve(image);
-            }
-          } catch (err) {
-            console.warn('[LazyLoad] Error processing intersection entry:', err);
-          }
-        });
-      });
-      imageObserver.observe(img);
+    const observer = getSharedImageObserver();
+    if (observer) {
+      observer.observe(img);
     } else {
-      // Fallback for older browsers
+      // Fallback for older browsers without IntersectionObserver
       if (img.dataset.src) {
         img.src = img.dataset.src;
       }
@@ -116,18 +134,20 @@ export function prefersReducedMotion() {
 
 // Local storage with quota handling
 export const safeLocalStorage = {
-  setItem: (key, value, _retryCount = 0) => {
+  setItem: (key, value) => {
     try {
       localStorage.setItem(key, JSON.stringify(value));
       return true;
     } catch (e) {
-      if (e.name === 'QuotaExceededError' && _retryCount < 3) {
-        console.warn('LocalStorage quota exceeded. Clearing old data...');
-        // Clear old data with retry limit to prevent infinite recursion
-        const keys = Object.keys(localStorage);
-        if (keys.length > 0) {
-          localStorage.removeItem(keys[0]);
-          return safeLocalStorage.setItem(key, value, _retryCount + 1);
+      if (e.name === 'QuotaExceededError') {
+        console.warn('[safeLocalStorage] Quota exceeded. Unable to save key:', key);
+        // Only remove the *same* key to make room, never delete unrelated data
+        try {
+          localStorage.removeItem(key);
+          localStorage.setItem(key, JSON.stringify(value));
+          return true;
+        } catch {
+          // Still failing — give up gracefully
         }
       }
       console.error('Error saving to localStorage:', e);

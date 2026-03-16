@@ -826,7 +826,8 @@ function executeInsert(tokens, tables) {
   p.expect('KEYWORD', 'INTO');
   const tableName = p.advance().value;
 
-  const table = tables[tableName] || tables[tableName.toLowerCase()];
+  const resolvedName = tables[tableName] ? tableName : tableName.toLowerCase();
+  const table = tables[resolvedName];
   if (!table) throw new Error(`Table "${tableName}" not found`);
 
   let cols = null;
@@ -848,15 +849,21 @@ function executeInsert(tokens, tables) {
   } while (p.consumeIf('COMMA'));
   p.expect('RPAREN');
 
+  let newRow;
   if (cols) {
-    const row = table.columns.map((c) => {
+    newRow = table.columns.map((c) => {
       const idx = cols.indexOf(c);
       return idx >= 0 ? values[idx] : null;
     });
-    table.rows.push(row);
   } else {
-    table.rows.push(values);
+    newRow = values;
   }
+
+  // Avoid mutating the original table — replace the rows array immutably
+  tables[resolvedName] = {
+    ...table,
+    rows: [...table.rows, newRow],
+  };
 
   return { message: `1 row inserted into "${tableName}"`, affectedRows: 1 };
 }
@@ -866,7 +873,9 @@ function executeUpdate(tokens, tables) {
   const p = new Parser(tokens);
   p.expect('KEYWORD', 'UPDATE');
   const tableName = p.advance().value;
-  const table = tables[tableName] || tables[tableName.toLowerCase()];
+
+  const resolvedName = tables[tableName] ? tableName : tableName.toLowerCase();
+  const table = tables[resolvedName];
   if (!table) throw new Error(`Table "${tableName}" not found`);
 
   p.expect('KEYWORD', 'SET');
@@ -885,15 +894,21 @@ function executeUpdate(tokens, tables) {
   }
 
   let count = 0;
-  for (const row of table.rows) {
+  // Build new rows array immutably instead of mutating existing rows
+  const newRows = table.rows.map((row) => {
     if (!where || evaluateExpr(where, row, table.columns)) {
+      const updatedRow = [...row];
       for (const s of sets) {
         const idx = table.columns.indexOf(s.col);
-        if (idx >= 0) row[idx] = evaluateExpr(s.expr, row, table.columns);
+        if (idx >= 0) updatedRow[idx] = evaluateExpr(s.expr, row, table.columns);
       }
       count++;
+      return updatedRow;
     }
-  }
+    return [...row];
+  });
+
+  tables[resolvedName] = { ...table, rows: newRows };
 
   return { message: `${count} row(s) updated in "${tableName}"`, affectedRows: count };
 }
@@ -904,7 +919,9 @@ function executeDelete(tokens, tables) {
   p.expect('KEYWORD', 'DELETE');
   p.expect('KEYWORD', 'FROM');
   const tableName = p.advance().value;
-  const table = tables[tableName] || tables[tableName.toLowerCase()];
+
+  const resolvedName = tables[tableName] ? tableName : tableName.toLowerCase();
+  const table = tables[resolvedName];
   if (!table) throw new Error(`Table "${tableName}" not found`);
 
   let where = null;
@@ -914,12 +931,16 @@ function executeDelete(tokens, tables) {
   }
 
   const before = table.rows.length;
+  let filteredRows;
   if (where) {
-    table.rows = table.rows.filter((row) => !evaluateExpr(where, row, table.columns));
+    filteredRows = table.rows.filter((row) => !evaluateExpr(where, row, table.columns));
   } else {
-    table.rows = [];
+    filteredRows = [];
   }
-  const count = before - table.rows.length;
+  const count = before - filteredRows.length;
+
+  // Replace table reference immutably instead of mutating
+  tables[resolvedName] = { ...table, rows: filteredRows };
 
   return { message: `${count} row(s) deleted from "${tableName}"`, affectedRows: count };
 }

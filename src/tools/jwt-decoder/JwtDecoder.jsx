@@ -1145,11 +1145,17 @@ export default function JwtDecoder() {
   const handlePasteFromClipboard = useCallback(async () => {
     try {
       setPasteError('');
-      const text = await navigator.clipboard.readText();
-      if (text) setToken(text);
-      else setPasteError('Clipboard is empty');
-    } catch (e) {
-      setPasteError('Clipboard access denied. Use Ctrl+V to paste manually.');
+      // navigator.clipboard.readText() is not available in VS Code webview
+      // due to security restrictions. Use the Clipboard API with fallback.
+      if (navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+        const text = await navigator.clipboard.readText();
+        if (text) { setToken(text); return; }
+        else { setPasteError('Clipboard is empty'); return; }
+      }
+      // Clipboard API not available (e.g., VS Code webview)
+      setPasteError('Use Ctrl+V / Cmd+V to paste (direct clipboard access is restricted in this environment).');
+    } catch {
+      setPasteError('Use Ctrl+V / Cmd+V to paste (direct clipboard access is restricted in this environment).');
     }
   }, []);
 

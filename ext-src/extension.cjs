@@ -38,7 +38,6 @@ const TOOL_QUICKPICK_ITEMS = [
   { label: '$(screen-normal) Box Shadow', description: 'Create layered box shadows', route: '/box-shadow' },
   { label: '$(mirror) Glassmorphism', description: 'Create frosted glass effects', route: '/glassmorphism' },
   { label: '$(layout) Grid Generator', description: 'Build CSS Grid layouts', route: '/grid-generator' },
-  { label: '$(browser) Frontend Playground', description: 'Code HTML/CSS/JS live', route: '/frontend-playground' },
   { label: '$(graph-line) Sorting Visualizer', description: 'Visualize sorting algorithms', route: '/sorting-visualizer' },
   { label: '$(git-merge) Recursion Visualizer', description: 'Visualize recursive calls', route: '/recursion-visualizer' },
   { label: '$(sync) Event Loop Visualizer', description: 'See JS event loop in action', route: '/event-loop-visualizer' },
@@ -128,6 +127,9 @@ function openToolboxPanel(context, initialRoute = '/') {
 
   mainPanel.webview.html = getWebviewContent(mainPanel.webview, context.extensionUri, initialRoute);
 
+  // Send the current VS Code theme to the webview immediately after creation
+  sendThemeToPanel(mainPanel);
+
   // Handle messages from webview
   mainPanel.webview.onDidReceiveMessage(
     (message) => handleWebviewMessage(message, mainPanel, context),
@@ -135,9 +137,35 @@ function openToolboxPanel(context, initialRoute = '/') {
     context.subscriptions
   );
 
+  // Listen for VS Code theme changes and forward to the webview
+  const themeDisposable = vscode.window.onDidChangeActiveColorTheme(() => {
+    if (mainPanel) {
+      sendThemeToPanel(mainPanel);
+    }
+  });
+  context.subscriptions.push(themeDisposable);
+
   mainPanel.onDidDispose(() => {
     mainPanel = undefined;
   }, null, context.subscriptions);
+}
+
+/**
+ * Sends the current VS Code color theme info to a webview panel
+ * @param {vscode.WebviewPanel} panel
+ */
+function sendThemeToPanel(panel) {
+  try {
+    const kind = vscode.window.activeColorTheme.kind;
+    const isDark = kind === vscode.ColorThemeKind.Dark || kind === vscode.ColorThemeKind.HighContrast;
+    panel.webview.postMessage({
+      type: 'themeInfo',
+      isDark: isDark,
+      kind: kind,
+    });
+  } catch (e) {
+    console.warn('[DevToolbox] Failed to send theme info:', e);
+  }
 }
 
 /**
@@ -227,13 +255,7 @@ function handleWebviewMessage(message, panel, context) {
     }
 
     case 'getTheme': {
-      const kind = vscode.window.activeColorTheme.kind;
-      const isDark = kind === vscode.ColorThemeKind.Dark || kind === vscode.ColorThemeKind.HighContrast;
-      panel.webview.postMessage({
-        type: 'themeInfo',
-        isDark: isDark,
-        kind: kind,
-      });
+      sendThemeToPanel(panel);
       break;
     }
 
@@ -250,6 +272,17 @@ function handleWebviewMessage(message, panel, context) {
         key: message.key,
         value: value,
       });
+      break;
+    }
+
+    case 'reloadWebview': {
+      // Recreate the webview content to simulate a page reload
+      try {
+        const currentRoute = message.route || '/';
+        panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, currentRoute);
+      } catch (e) {
+        vscode.window.showErrorMessage('Failed to reload toolbox. Please close and reopen the panel.');
+      }
       break;
     }
   }
@@ -279,35 +312,46 @@ function getWebviewContent(webview, extensionUri, initialRoute = '/') {
   // Get nonce for Content Security Policy
   const nonce = getNonce();
 
-  // Replace asset paths with webview URIs
+  // Replace asset paths with webview URIs (handles both ./ and / prefixed paths)
+  html = html.replace(/(href|src)="\.\/([^"]*)"/g, (match, attr, filePath) => {
+    const fileUri = vscode.Uri.joinPath(distPath, filePath);
+    const webviewUri = webview.asWebviewUri(fileUri);
+    return `${attr}="${webviewUri}"`;
+  });
   html = html.replace(/(href|src)="\/([^"]*)"/g, (match, attr, filePath) => {
+    if (filePath.startsWith('http') || filePath.startsWith('//')) return match;
     const fileUri = vscode.Uri.joinPath(distPath, filePath);
     const webviewUri = webview.asWebviewUri(fileUri);
     return `${attr}="${webviewUri}"`;
   });
 
   // Inject CSP and initial route data
+  // script-src includes both nonce (for inline scripts) and cspSource (for dynamically imported chunks)
   const csp = `
     default-src 'none';
     style-src ${webview.cspSource} 'unsafe-inline' https://fonts.googleapis.com;
     font-src ${webview.cspSource} https://fonts.gstatic.com;
     img-src ${webview.cspSource} https: data: blob:;
-    script-src 'nonce-${nonce}';
-    connect-src https: http: ws: wss: data: blob:;
+    script-src 'nonce-${nonce}' ${webview.cspSource};
+    connect-src ${webview.cspSource} https: http: ws: wss: data: blob:;
     frame-src blob: data:;
     worker-src blob:;
   `.replace(/\s+/g, ' ').trim();
 
-  // Inject nonce into script tags
+  // Inject nonce into script tags and remove crossorigin (not applicable in webview)
+  html = html.replace(/<script([^>]*) crossorigin/g, '<script$1');
   html = html.replace(/<script/g, `<script nonce="${nonce}"`);
+
+  // Remove crossorigin from link tags as well
+  html = html.replace(/<link([^>]*) crossorigin/g, '<link$1');
 
   // Inject meta tags before </head>
   const metaInjection = `
     <meta http-equiv="Content-Security-Policy" content="${csp}">
     <script nonce="${nonce}">
       window.__VSCODE_API__ = true;
-      window.__INITIAL_ROUTE__ = '${initialRoute}';
-      window.__WEBVIEW_NONCE__ = '${nonce}';
+      window.__INITIAL_ROUTE__ = ${JSON.stringify(initialRoute)};
+      window.__WEBVIEW_NONCE__ = ${JSON.stringify(nonce)};
     </script>
   `;
   html = html.replace('</head>', `${metaInjection}\n</head>`);
@@ -412,7 +456,6 @@ class SidebarProvider {
       { name: 'Box Shadow', icon: '◻️', route: '/box-shadow', color: '#6366f1' },
       { name: 'Glassmorphism', icon: '💎', route: '/glassmorphism', color: '#06b6d4' },
       { name: 'Grid Generator', icon: '⊞', route: '/grid-generator', color: '#84cc16' },
-      { name: 'Frontend Playground', icon: '🖥️', route: '/frontend-playground', color: '#f97316' },
       { name: 'Password Generator', icon: '🔒', route: '/password-generator', color: '#10b981' },
       { name: 'README Generator', icon: '📄', route: '/readme-generator', color: '#6366f1' },
       { name: 'Mock API Generator', icon: '🗄️', route: '/mock-api', color: '#0ea5e9' },
@@ -424,7 +467,7 @@ class SidebarProvider {
     ];
 
     const toolButtons = tools.map(t => `
-      <button class="tool-btn" onclick="openTool('${t.route}')" title="${t.name}">
+      <button class="tool-btn" data-route="${t.route}" title="${t.name}">
         <span class="tool-icon" style="background: ${t.color}15; color: ${t.color}">${t.icon}</span>
         <span class="tool-name">${t.name}</span>
         <span class="tool-arrow">→</span>
@@ -565,11 +608,11 @@ class SidebarProvider {
     </div>
   </div>
 
-  <button class="open-full-btn" onclick="openMain()">
+  <button class="open-full-btn" id="open-full-btn">
     ⚡ Open Full Toolbox
   </button>
 
-  <input type="text" class="search-box" placeholder="Search tools..." oninput="filterTools(this.value)" />
+  <input type="text" class="search-box" id="search-box" placeholder="Search tools..." />
 
   <div class="section-label">All Tools</div>
   <div class="tools-list" id="tools-list">
@@ -578,23 +621,29 @@ class SidebarProvider {
 
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
-    
-    function openTool(route) {
-      vscode.postMessage({ type: 'openTool', route: route });
-    }
-    
-    function openMain() {
-      vscode.postMessage({ type: 'openMain' });
-    }
 
-    function filterTools(query) {
-      const q = query.toLowerCase().trim();
+    // Open Full Toolbox button
+    document.getElementById('open-full-btn').addEventListener('click', function() {
+      vscode.postMessage({ type: 'openMain' });
+    });
+
+    // Search/filter tools
+    document.getElementById('search-box').addEventListener('input', function(e) {
+      const q = e.target.value.toLowerCase().trim();
       const buttons = document.querySelectorAll('.tool-btn');
-      buttons.forEach(btn => {
+      buttons.forEach(function(btn) {
         const name = btn.querySelector('.tool-name').textContent.toLowerCase();
         btn.classList.toggle('hidden', q && !name.includes(q));
       });
-    }
+    });
+
+    // Tool buttons — use event delegation on the tools list
+    document.getElementById('tools-list').addEventListener('click', function(e) {
+      const btn = e.target.closest('.tool-btn');
+      if (btn && btn.dataset.route) {
+        vscode.postMessage({ type: 'openTool', route: btn.dataset.route });
+      }
+    });
   </script>
 </body>
 </html>`;

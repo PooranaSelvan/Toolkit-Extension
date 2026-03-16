@@ -83,6 +83,7 @@ export default function ReadmeGenerator() {
   const [showWidgets, setShowWidgets] = useState(false);
   const [showSectionTemplates, setShowSectionTemplates] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const { copied, copyToClipboard } = useCopyToClipboard();
   const { downloadFile } = useDownloadFile();
@@ -196,13 +197,17 @@ const timer = setTimeout(() => {
   };
 
   const handleReset = () => {
-    if (!confirm('Reset all fields? This cannot be undone.')) return;
+    setShowResetConfirm(true);
+  };
+
+  const confirmReset = () => {
     setFormData(INITIAL_FORM);
     setGithubError('');
     setGithubSuccess('');
     setGithubMeta(null);
     setGithubProgress(0);
     localStorage.removeItem('readme-generator-autosave');
+    setShowResetConfirm(false);
   };
 
   // Draft management
@@ -281,19 +286,21 @@ ${generatedMarkdown.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
   }, []);
 
   // Share as URL
-  const handleShareUrl = useCallback(() => {
+  const handleShareUrl = useCallback(async () => {
     try {
       const shareData = { formData, template };
-      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(shareData))));
+      const jsonStr = JSON.stringify(shareData);
+      const bytes = new TextEncoder().encode(jsonStr);
+      const encoded = btoa(String.fromCharCode(...bytes));
       const url = `${window.location.origin}${window.location.pathname}#readme=${encoded}`;
-      navigator.clipboard.writeText(url).then(() => {
-        setShareSuccess(true);
-        setTimeout(() => setShareSuccess(false), 3000);
-      });
+      // Use the VS Code-compatible clipboard bridge instead of navigator.clipboard directly
+      await copyToClipboard(url);
+      setShareSuccess(true);
+      setTimeout(() => setShareSuccess(false), 3000);
     } catch (err) {
       console.error('Share URL creation failed:', err);
     }
-  }, [formData, template]);
+  }, [formData, template, copyToClipboard]);
 
   // Load from URL hash on mount
   useEffect(() => {
@@ -301,7 +308,9 @@ ${generatedMarkdown.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
       const hash = window.location.hash;
       if (hash.startsWith('#readme=')) {
         const encoded = hash.slice(8);
-        const decoded = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+        const binaryStr = atob(encoded);
+        const bytes = Uint8Array.from(binaryStr, (c) => c.charCodeAt(0));
+        const decoded = JSON.parse(new TextDecoder().decode(bytes));
         if (decoded.formData) {
           setFormData({ ...INITIAL_FORM, ...decoded.formData });
         }
@@ -516,16 +525,41 @@ ${generatedMarkdown.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
 
               <div className="w-px h-5 bg-gradient-to-b from-transparent via-base-300 to-transparent hidden sm:block" />
 
-              <motion.button
-                whileHover={{ scale: 1.04, rotate: 180 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={handleReset}
-                className="btn btn-ghost btn-sm gap-1.5 rounded-xl hover:bg-error/10 hover:text-error transition-colors"
-                title="Reset all fields"
-              >
-                <RefreshCw size={14} />
-                <span className="hidden sm:inline">Reset</span>
-              </motion.button>
+              <div className="relative">
+                <motion.button
+                  whileHover={{ scale: 1.04, rotate: 180 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleReset}
+                  className="btn btn-ghost btn-sm gap-1.5 rounded-xl hover:bg-error/10 hover:text-error transition-colors"
+                  title="Reset all fields"
+                >
+                  <RefreshCw size={14} />
+                  <span className="hidden sm:inline">Reset</span>
+                </motion.button>
+                <AnimatePresence>
+                  {showResetConfirm && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowResetConfirm(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute right-0 top-full mt-2 w-64 bg-base-100 rounded-xl border border-error/20 shadow-2xl z-50 p-4"
+                      >
+                        <p className="text-sm font-semibold mb-1">Reset all fields?</p>
+                        <p className="text-xs opacity-60 mb-3">This cannot be undone.</p>
+                        <div className="flex gap-2">
+                          <button onClick={confirmReset} className="btn btn-error btn-xs gap-1.5 rounded-lg">
+                            <RefreshCw size={12} /> Yes, Reset
+                          </button>
+                          <button onClick={() => setShowResetConfirm(false)} className="btn btn-ghost btn-xs rounded-lg">Cancel</button>
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
 
               <motion.button
                 whileHover={{ scale: 1.04 }}

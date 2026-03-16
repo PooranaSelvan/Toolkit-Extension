@@ -1,5 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
+/* Fonts loaded via <link> in index.html — no duplicate @import needed */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -90,20 +89,41 @@ html {
   html {
     scroll-behavior: auto;
   }
-  * {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-}body {
+}
+
+/* Prevent horizontal overflow globally — catches rogue elements */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+
+
+/* Dynamic viewport height support for mobile browsers */
+@supports (min-height: 100dvh) {
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+}
+
+body {
   background-image: 
     radial-gradient(at 0% 0%, color-mix(in oklch, var(--color-primary) 3%, transparent) 0px, transparent 50%),
     radial-gradient(at 100% 0%, color-mix(in oklch, var(--color-secondary, var(--color-primary)) 3%, transparent) 0px, transparent 50%),
     radial-gradient(at 100% 100%, color-mix(in oklch, var(--color-accent, var(--color-primary)) 2%, transparent) 0px, transparent 50%);
-  background-attachment: fixed;
+  /* background-attachment: fixed causes severe repaint jank on mobile/iOS — removed */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden; /* Prevent horizontal scroll from any miscalculated widths */
 }
 /* ═══ shadcn-inspired Form Controls — Enhanced ═══ */
 .input, .select, .textarea {
@@ -763,13 +783,11 @@ html {
   opacity: 1;
 }
 
-/* ═══ Floating badge with glow ═══ */
+/* ═══ Floating badge ═══ */
+/* Continuous float animation removed — contributes to UI jank
+   without meaningful visual benefit on a small badge element. */
 .floating-badge {
-  animation: badge-float 3s ease-in-out infinite;
-}
-@keyframes badge-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+  /* intentionally static */
 }
 
 /* ═══ Sidebar brand shimmer ═══ */
@@ -841,8 +859,13 @@ html {
   border-color: color-mix(in oklch, var(--color-primary) 25%, transparent);
 }
 
-/* Prevent FOUC on accordion transitions */
-.overflow-hidden { will-change: height; }
+/* Sidebar body lock — used by Sidebar.jsx to prevent body scroll on mobile.
+   Scoped to a specific class to avoid interfering with Tailwind's `overflow-hidden`. */
+body.sidebar-body-lock,
+html.sidebar-body-lock {
+  overflow: hidden !important;
+  touch-action: none;
+}
 
 /* ═══ Markdown preview — Premium GitHub-style ═══ */
 .markdown-preview {
@@ -1516,25 +1539,10 @@ main::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--colo
   border-radius: 50%;
   filter: blur(80px);
   pointer-events: none;
-  will-change: transform;
-}
-.ambient-blob-1 {
-  animation: blob-float 20s ease-in-out infinite;
-}
-.ambient-blob-2 {
-  animation: blob-float-reverse 25s ease-in-out infinite;
-}
-@keyframes blob-float {
-  0% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -20px) scale(1.05); }
-  66% { transform: translate(-15px, 15px) scale(0.95); }
-  100% { transform: translate(0, 0) scale(1); }
-}
-@keyframes blob-float-reverse {
-  0% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(-25px, 15px) scale(0.95); }
-  66% { transform: translate(20px, -10px) scale(1.08); }
-  100% { transform: translate(0, 0) scale(1); }
+  /* Removed will-change and continuous animations — they created
+     persistent composited layers and forced GPU texture updates on
+     every frame even when the blobs are barely visible (opacity 0.015–0.035).
+     Static positioning is visually equivalent at such low opacity. */
 }
 
 /* ═══ Header gradient accent line ═══ */
@@ -1551,8 +1559,8 @@ main::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--colo
     color-mix(in oklch, var(--color-secondary, var(--color-primary)) 20%, transparent) 70%,
     transparent 100%
   );
-  background-size: 200% 100%;
-  animation: gradient-shift 6s ease-in-out infinite;
+  /* Removed infinite gradient-shift animation — a 1px line animating
+     continuously consumes GPU compositing resources for negligible visual impact */
 }
 
 /* ═══ Sidebar active indicator animation ═══ */
@@ -1589,13 +1597,14 @@ main::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--colo
 
 /* ═══ Professional micro-interactions ═══ */
 
-/* Smooth image loading — fade in when loaded */
-img[loading="lazy"] {
+/* Smooth image loading — fade in when loaded.
+   Only target images managed by the LazyImage component (via data-lazy-managed).
+   Standard <img loading="lazy"> must NOT be hidden, as browsers handle loading natively. */
+img[data-lazy-managed] {
   opacity: 0;
   transition: opacity 0.4s ease;
 }
-img[loading="lazy"].loaded,
-img[loading="lazy"][src] {
+img[data-lazy-managed].loaded {
   opacity: 1;
 }
 
@@ -1675,15 +1684,8 @@ img[loading="lazy"][src] {
 }
 
 /* ═══ Smooth color theme transitions ═══ */
-*,
-*::before,
-*::after {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 0ms;
-}
-
-/* Only animate theme transitions on specific elements */
+/* Apply theme transitions only to layout containers — avoid blanket * rules
+   that override component-level transitions and hurt performance. */
 body,
 .bg-base-100,
 .bg-base-200,
@@ -1692,6 +1694,8 @@ body,
 .border-base-300,
 .text-base-content,
 .text-primary {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 200ms;
 }
 
@@ -1727,6 +1731,34 @@ pre {
 .resize-transition {
   transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1),
               height 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ═══ Content overflow safety ═══ */
+/* Prevent any tool content from breaking the layout */
+main {
+  contain: layout style;
+  min-width: 0;
+}
+main > * {
+  min-width: 0;
+  max-width: 100%;
+}
+/* Tables inside tools — make them scrollable, not overflow */
+main table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+/* Pre blocks inside tools — scrollable */
+main pre {
+  overflow-x: auto;
+  max-width: 100%;
+  word-break: break-all;
+}
+/* Long unbreakable text safety */
+main p, main li, main span, main td, main th {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 /* ═══ Enhanced Hero Search Bar ═══ */

@@ -104,6 +104,18 @@ async function safeFetch(url) {
   }
 }
 
+/** Decode base64 content safely, handling UTF-8 characters */
+function decodeBase64(encoded) {
+  try {
+    const binaryStr = atob(encoded);
+    const bytes = Uint8Array.from(binaryStr, (ch) => ch.charCodeAt(0));
+    return new TextDecoder('utf-8').decode(bytes);
+  } catch {
+    // Fallback for environments without TextDecoder
+    return atob(encoded);
+  }
+}
+
 /** Fetch file content (decoded from base64) from the GitHub Contents API */
 async function fetchFileContent(owner, repo, path) {
   try {
@@ -111,7 +123,7 @@ async function fetchFileContent(owner, repo, path) {
       headers: ghHeaders,
     });
     if (res.data?.content) {
-      return atob(res.data.content.replace(/\n/g, ''));
+      return decodeBase64(res.data.content.replace(/\n/g, ''));
     }
     // If the file is too large, try the download URL
     if (res.data?.download_url) {

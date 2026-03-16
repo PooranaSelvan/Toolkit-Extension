@@ -1,7 +1,7 @@
 import {
   FileText, Send, Settings, Server, KeyRound, Regex, Palette,
   Blend, Square, Gem, Braces,
-  Layout, Grid3X3,
+  Grid3X3,
   Lock,
   GraduationCap, GitBranch, RefreshCw,
   Columns3, Database,
@@ -120,16 +120,6 @@ const TOOLS = [
     tags: ['grid', 'css', 'layout', 'responsive', 'generator', 'columns', 'rows', 'drag'],
   },
   
-  {
-    id: 'frontend-playground',
-    name: 'Frontend Playground',
-    description: 'Code HTML, CSS & JS with live preview, Emmet, split view, CDN, layouts & sharing',
-    icon: Layout,
-    path: '/frontend-playground',
-    category: 'frontend',
-    tags: ['html', 'css', 'javascript', 'playground', 'preview', 'live', 'editor', 'emmet', 'split', 'share', 'layout', 'fonts'],
-  },
-
   // ─── Learning Tools ───
   {
     id: 'sorting-visualizer',
@@ -182,7 +172,7 @@ const TOOLS = [
   {
     id: 'settings',
     name: 'Settings',
-    description: 'Customize themes, appearance, and manage your data',
+    description: 'Manage your data and view app information',
     icon: Settings,
     path: '/settings',
     category: 'preferences',
