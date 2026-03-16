@@ -1,0 +1,1840 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══ Custom Toolbox Theme — #2D79FF Primary, White Background ═══ */
+:where(:root), [data-theme=toolbox] {
+  color-scheme: light;
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(98.5% 0.002 247);
+  --color-base-300: oklch(92.2% 0.01 256);
+  --color-base-content: oklch(25.8% 0.024 264);
+  --color-primary: oklch(57.5% 0.22 264);
+  --color-primary-content: oklch(100% 0 0);
+  --color-secondary: oklch(55% 0.257 277);
+  --color-secondary-content: oklch(100% 0 0);
+  --color-accent: oklch(63% 0.214 277);
+  --color-accent-content: oklch(100% 0 0);
+  --color-neutral: oklch(25.8% 0.024 264);
+  --color-neutral-content: oklch(98.5% 0.002 247);
+  --color-info: oklch(60% 0.185 252);
+  --color-info-content: oklch(100% 0 0);
+  --color-success: oklch(62% 0.19 145);
+  --color-success-content: oklch(100% 0 0);
+  --color-warning: oklch(79.5% 0.17 70);
+  --color-warning-content: oklch(100% 0 0);
+  --color-error: oklch(63% 0.24 25);
+  --color-error-content: oklch(100% 0 0);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+[data-theme=toolbox-dark] {
+  color-scheme: dark;
+  --color-base-100: oklch(18% 0.03 264);
+  --color-base-200: oklch(25.8% 0.024 264);
+  --color-base-300: oklch(36% 0.02 264);
+  --color-base-content: oklch(92.2% 0.01 256);
+  --color-primary: oklch(57.5% 0.22 264);
+  --color-primary-content: oklch(100% 0 0);
+  --color-secondary: oklch(63% 0.214 277);
+  --color-secondary-content: oklch(100% 0 0);
+  --color-accent: oklch(73% 0.17 277);
+  --color-accent-content: oklch(22% 0.07 277);
+  --color-neutral: oklch(25.8% 0.024 264);
+  --color-neutral-content: oklch(96% 0.005 256);
+  --color-info: oklch(68% 0.16 252);
+  --color-info-content: oklch(28% 0.06 252);
+  --color-success: oklch(65% 0.19 145);
+  --color-success-content: oklch(100% 0 0);
+  --color-warning: oklch(83% 0.16 84);
+  --color-warning-content: oklch(35% 0.1 50);
+  --color-error: oklch(70% 0.19 20);
+  --color-error-content: oklch(27% 0.1 15);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { 
+  background: color-mix(in oklch, var(--color-base-content) 20%, transparent); 
+  border-radius: 999px; 
+  transition: background 0.3s ease;
+}
+::-webkit-scrollbar-thumb:hover { 
+  background: color-mix(in oklch, var(--color-primary) 40%, transparent); 
+}
+::selection { background: color-mix(in oklch, var(--color-primary) 25%, transparent); }
+html { 
+  transition: background-color 0.4s ease, color 0.4s ease;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}body {
+  background-image: 
+    radial-gradient(at 0% 0%, color-mix(in oklch, var(--color-primary) 3%, transparent) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, color-mix(in oklch, var(--color-secondary, var(--color-primary)) 3%, transparent) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, color-mix(in oklch, var(--color-accent, var(--color-primary)) 2%, transparent) 0px, transparent 50%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+/* ═══ shadcn-inspired Form Controls — Enhanced ═══ */
+.input, .select, .textarea {
+  border-width: 1px;
+  border-color: color-mix(in oklch, var(--color-base-content) 12%, transparent);
+  background-color: color-mix(in oklch, var(--color-base-100) 95%, transparent);
+  color: var(--color-base-content);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 0.75rem;
+}
+
+/* Explicit sizing for inputs/selects — fixes DaisyUI v5 collapsed spacing */
+.input-xs, .select-xs {
+  height: 2rem !important;
+  min-height: 2rem !important;
+  padding-top: 0.375rem !important;
+  padding-bottom: 0.375rem !important;
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+}
+.input-sm, .select-sm {
+  height: 2.375rem !important;
+  min-height: 2.375rem !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.375rem;
+}
+.input-md, .select-md,
+.input:not(.input-xs):not(.input-sm):not(.input-lg),
+.select:not(.select-xs):not(.select-sm):not(.select-lg) {
+  height: 2.75rem !important;
+  min-height: 2.75rem !important;
+  padding-top: 0.625rem !important;
+  padding-bottom: 0.625rem !important;
+  padding-left: 0.875rem;
+  padding-right: 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+}
+
+.textarea {
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem;
+  min-height: 5rem;
+  line-height: 1.6;
+  border-radius: 0.5rem;
+}
+
+.input::placeholder, .textarea::placeholder {
+  color: color-mix(in oklch, var(--color-base-content) 35%, transparent);
+}
+.input:focus, .input:focus-within, .select:focus, .select:focus-within, .textarea:focus, .textarea:focus-within {
+  outline: none;
+  outline-color: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: 
+    0 0 0 3px color-mix(in oklch, var(--color-primary) 12%, transparent),
+    0 1px 2px color-mix(in oklch, var(--color-base-content) 6%, transparent),
+    0 0 0 1px var(--color-primary) inset;
+}
+
+/* Enhanced focus-visible for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+  transition: outline-color 0.2s ease;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px color-mix(in oklch, var(--color-primary) 15%, transparent);
+}
+
+/* Skip to main content link for accessibility */
+.skip-to-main {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: var(--color-primary);
+  color: var(--color-primary-content);
+  padding: 0.75rem 1.5rem;
+  z-index: 9999;
+  border-radius: 0 0 0.5rem 0.5rem;
+  font-weight: 600;
+  transition: top 0.3s ease;
+}
+
+.skip-to-main:focus {
+  top: 0;
+}
+/* ═══ Magic UI-Inspired Buttons ═══ */
+.btn {
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 0.5rem;
+  letter-spacing: 0.01em;
+  position: relative;
+  overflow: hidden;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  height: 2.625rem;
+  min-height: 2.625rem;
+  font-size: 0.8125rem;
+  /* DO NOT set `color` here — DaisyUI v5 uses `color: var(--btn-fg)` internally.
+     Setting `color` directly would override btn-primary/btn-secondary/etc. text colors.
+     Let DaisyUI manage text color via --btn-fg CSS variable. */
+}
+
+.btn-xs {
+  height: 1.875rem !important;
+  min-height: 1.875rem !important;
+  padding-left: 0.875rem;
+  padding-right: 0.875rem;
+  font-size: 0.6875rem;
+  gap: 0.375rem;
+  border-radius: 0.625rem;
+}
+.btn-sm {
+  height: 2.25rem !important;
+  min-height: 2.25rem !important;
+  padding-left: 1.125rem;
+  padding-right: 1.125rem;
+  font-size: 0.75rem;
+  gap: 0.4rem;
+  border-radius: 0.75rem;
+}
+.btn-lg {
+  height: 3.125rem !important;
+  min-height: 3.125rem !important;
+  padding-left: 1.75rem;
+  padding-right: 1.75rem;
+  font-size: 0.9375rem;
+  gap: 0.5rem;
+  border-radius: 0.875rem;
+}
+
+/* Ensure button text/content is always visible above pseudo-element overlays.
+   `isolation: isolate` on .btn creates a stacking context so that 
+   z-index:-1 on ::before/::after pushes them behind text nodes. */
+.btn {
+  isolation: isolate;
+}
+
+/* Ripple effect for all buttons */
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(255,255,255,0.15) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+.btn:active::after {
+  opacity: 1;
+  transition: opacity 0s;
+}
+
+.btn-primary {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 1px 2px color-mix(in oklch, var(--color-primary) 18%, transparent);
+  position: relative;
+  /* DaisyUI v5 sets --btn-fg for text color via --btn-color;
+     do NOT override with a direct `color` property */
+}
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.12), rgba(255,255,255,0.02));
+  pointer-events: none;
+  z-index: -1;
+}
+.btn-primary:hover {
+  box-shadow: 
+    0 2px 8px color-mix(in oklch, var(--color-primary) 22%, transparent);
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+.btn-primary:active { 
+  transform: translateY(0px) scale(0.98);
+  box-shadow: 
+    0 1px 2px color-mix(in oklch, var(--color-primary) 12%, transparent);
+  filter: brightness(0.97);
+}
+.btn-ghost { border-color: transparent; }
+.btn-ghost:hover {
+  background-color: color-mix(in oklch, var(--color-base-content) 7%, transparent);
+  box-shadow: none;
+  transform: translateY(-1px);
+}
+.btn-ghost:active {
+  transform: translateY(0px) scale(0.98);
+}
+.btn-outline {
+  border-color: color-mix(in oklch, var(--color-base-content) 15%, transparent);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: none;
+}
+.btn-outline:hover {
+  border-color: color-mix(in oklch, var(--color-primary) 45%, transparent);
+  background: color-mix(in oklch, var(--color-primary) 6%, transparent);
+  --btn-fg: var(--color-primary);
+  box-shadow: 
+    0 1px 4px color-mix(in oklch, var(--color-primary) 8%, transparent);
+  transform: translateY(-1px);
+}
+.btn-outline:active {
+  transform: translateY(0px) scale(0.98);
+}
+.btn-secondary {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px color-mix(in oklch, var(--color-secondary) 12%, transparent);
+}
+.btn-secondary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.1), transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+.btn-secondary:hover {
+  box-shadow: 0 2px 8px color-mix(in oklch, var(--color-secondary) 18%, transparent);
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+.btn-secondary:active {
+  transform: translateY(0px) scale(0.98);
+}
+.btn-error {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px color-mix(in oklch, var(--color-error) 12%, transparent);
+}
+.btn-error::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.1), transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+.btn-error:hover {
+  box-shadow: 0 2px 8px color-mix(in oklch, var(--color-error) 18%, transparent);
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+.btn-error:active {
+  transform: translateY(0px) scale(0.98);
+}
+.btn-success {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px color-mix(in oklch, var(--color-success) 12%, transparent);
+}
+.btn-success:hover {
+  box-shadow: 0 2px 8px color-mix(in oklch, var(--color-success) 18%, transparent);
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+.btn-info {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px color-mix(in oklch, var(--color-info) 12%, transparent);
+}
+.btn-info:hover {
+  box-shadow: 0 2px 8px color-mix(in oklch, var(--color-info) 18%, transparent);
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+.btn-warning {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px color-mix(in oklch, var(--color-warning) 12%, transparent);
+}
+.btn-warning:hover {
+  box-shadow: 0 2px 8px color-mix(in oklch, var(--color-warning) 18%, transparent);
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+/* btn-accent: DaisyUI handles --btn-fg automatically */
+
+/* Compound variant: ghost + colored — use --btn-fg to set text color, not `color` directly.
+   DaisyUI v5 uses --btn-fg for text color; setting `color` directly overrides it. */
+.btn-ghost.btn-error {
+  background: transparent;
+  --btn-fg: var(--color-error);
+  border-color: transparent;
+}
+.btn-ghost.btn-error:hover {
+  background-color: color-mix(in oklch, var(--color-error) 10%, transparent);
+  --btn-fg: var(--color-error);
+}
+.btn-ghost.btn-warning {
+  background: transparent;
+  --btn-fg: var(--color-warning);
+  border-color: transparent;
+}
+.btn-ghost.btn-warning:hover {
+  background-color: color-mix(in oklch, var(--color-warning) 10%, transparent);
+  --btn-fg: var(--color-warning);
+}
+.btn-ghost.btn-success {
+  background: transparent;
+  --btn-fg: var(--color-success);
+  border-color: transparent;
+}
+.btn-ghost.btn-success:hover {
+  background-color: color-mix(in oklch, var(--color-success) 10%, transparent);
+  --btn-fg: var(--color-success);
+}
+.btn-ghost.btn-info {
+  background: transparent;
+  --btn-fg: var(--color-info);
+  border-color: transparent;
+}
+.btn-ghost.btn-info:hover {
+  background-color: color-mix(in oklch, var(--color-info) 10%, transparent);
+  --btn-fg: var(--color-info);
+}
+.btn-ghost.btn-primary {
+  background: transparent;
+  --btn-fg: var(--color-primary);
+  border-color: transparent;
+}
+.btn-ghost.btn-primary:hover {
+  background-color: color-mix(in oklch, var(--color-primary) 10%, transparent);
+  --btn-fg: var(--color-primary);
+}
+
+/* Compound variant: outline + colored — use --btn-fg for text */
+.btn-outline.btn-primary {
+  border-color: color-mix(in oklch, var(--color-primary) 40%, transparent);
+  --btn-fg: var(--color-primary);
+  background: transparent;
+}
+.btn-outline.btn-primary:hover {
+  background: var(--color-primary);
+  --btn-fg: var(--color-primary-content);
+  border-color: var(--color-primary);
+}
+.btn-outline.btn-error {
+  border-color: color-mix(in oklch, var(--color-error) 40%, transparent);
+  --btn-fg: var(--color-error);
+  background: transparent;
+}
+.btn-outline.btn-error:hover {
+  background: var(--color-error);
+  --btn-fg: var(--color-error-content);
+  border-color: var(--color-error);
+}
+
+/* ═══ Checkbox fix ═══ */
+.checkbox-xs {
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+/* ═══ Tabs — Enhanced ═══ */
+.tabs-border > .tab.tab-active, .tabs-box > .tab.tab-active { 
+  color: var(--color-primary); 
+  font-weight: 600; 
+}
+.tabs-box {
+  background-color: color-mix(in oklch, var(--color-base-200) 70%, transparent);
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+  backdrop-filter: blur(16px);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
+  box-shadow: 
+    0 1px 3px color-mix(in oklch, var(--color-base-content) 3%, transparent) inset,
+    0 0 0 1px color-mix(in oklch, var(--color-base-content) 2%, transparent) inset;
+}
+.tabs-box > .tab.tab-active {
+  background-color: var(--color-base-100);
+  border-radius: 0.625rem;
+  box-shadow: 
+    0 1px 3px color-mix(in oklch, var(--color-base-content) 8%, transparent),
+    0 2px 8px -2px color-mix(in oklch, var(--color-base-content) 4%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-primary) 12%, transparent) inset;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tab {
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  border-radius: 0.5rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tab:hover:not(.tab-active) {
+  background-color: color-mix(in oklch, var(--color-base-content) 5%, transparent);
+  transform: translateY(-1px);
+}
+/* ═══ Badge — Enhanced ═══ */
+.badge {
+  border-radius: 9999px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: all 0.2s ease;
+}
+.badge-xs {
+  height: 1.125rem;
+  font-size: 0.625rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.badge-sm {
+  height: 1.375rem;
+  font-size: 0.6875rem;
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+}
+.badge-ghost {
+  background-color: color-mix(in oklch, var(--color-base-content) 8%, transparent);
+  color: var(--color-base-content);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
+}
+.badge-primary {
+  box-shadow: 
+    0 1px 2px color-mix(in oklch, var(--color-primary) 20%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-primary) 15%, transparent) inset;
+}
+.badge-success {
+  box-shadow: 
+    0 1px 2px color-mix(in oklch, var(--color-success) 20%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-success) 15%, transparent) inset;
+}
+.badge-info {
+  box-shadow: 
+    0 1px 2px color-mix(in oklch, var(--color-info) 20%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-info) 15%, transparent) inset;
+}
+.badge-warning {
+  box-shadow: 
+    0 1px 2px color-mix(in oklch, var(--color-warning) 20%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-warning) 15%, transparent) inset;
+}
+.badge-error {
+  box-shadow: 
+    0 1px 2px color-mix(in oklch, var(--color-error) 20%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-error) 15%, transparent) inset;
+}
+/* ═══ Divider / Alert — Enhanced ═══ */
+.divider::before, .divider::after { background-color: color-mix(in oklch, var(--color-base-content) 10%, transparent); }
+.alert {
+  border-radius: 1rem;
+  padding: 0.875rem 1.125rem;
+  font-size: 0.8125rem;
+  gap: 0.625rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
+  box-shadow: 
+    0 2px 8px color-mix(in oklch, var(--color-base-content) 4%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-base-content) 3%, transparent) inset;
+}
+.alert-success {
+  border-color: color-mix(in oklch, var(--color-success) 20%, transparent);
+  box-shadow: 
+    0 2px 8px color-mix(in oklch, var(--color-success) 12%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-success) 15%, transparent) inset;
+}
+.alert-error {
+  border-color: color-mix(in oklch, var(--color-error) 20%, transparent);
+  box-shadow: 
+    0 2px 8px color-mix(in oklch, var(--color-error) 12%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-error) 15%, transparent) inset;
+}
+.alert-info {
+  border-color: color-mix(in oklch, var(--color-info) 20%, transparent);
+  box-shadow: 
+    0 2px 8px color-mix(in oklch, var(--color-info) 12%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-info) 15%, transparent) inset;
+}
+.alert-warning {
+  border-color: color-mix(in oklch, var(--color-warning) 20%, transparent);
+  box-shadow: 
+    0 2px 8px color-mix(in oklch, var(--color-warning) 12%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-warning) 15%, transparent) inset;
+}
+/* ═══ Card ═══ */
+.card {
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+/* ═══ Join group spacing fix ═══ */
+.join .input, .join .btn, .join .select {
+  border-radius: 0;
+}
+.join > :first-child, .join > :first-child .input, .join > :first-child .btn {
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
+.join > :last-child, .join > :last-child .input, .join > :last-child .btn {
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
+
+/* ═══ Glass & Effects ═══ */
+.glass-card {
+  background: color-mix(in oklch, var(--color-base-100) 80%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
+}
+.glass-highlight {
+  box-shadow:
+    0 1px 3px color-mix(in oklch, var(--color-base-content) 4%, transparent),
+    0 4px 16px color-mix(in oklch, var(--color-base-content) 2%, transparent),
+    inset 0 1px 0 color-mix(in oklch, var(--color-base-content) 4%, transparent);
+}
+.glass-base {
+  background: color-mix(in oklch, var(--color-base-200) 60%, transparent);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 6%, transparent);
+  border-radius: 0.75rem;
+}
+.glass-sidebar {
+  background: color-mix(in oklch, var(--color-base-100) 92%, transparent);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+}
+.glass-header {
+  background: color-mix(in oklch, var(--color-base-100) 78%, transparent);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+}
+/* Premium elevated glass variant */
+.glass-elevated {
+  background: color-mix(in oklch, var(--color-base-100) 88%, transparent);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 10%, transparent);
+  box-shadow:
+    0 2px 4px color-mix(in oklch, var(--color-base-content) 3%, transparent),
+    0 8px 24px -4px color-mix(in oklch, var(--color-base-content) 6%, transparent),
+    inset 0 1px 0 color-mix(in oklch, var(--color-base-content) 5%, transparent);
+}
+
+/* ═══ Gradient text ═══ */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary, var(--color-primary)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+/* Animated shimmer gradient text variant */
+.gradient-text-animated {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary, var(--color-primary)), var(--color-primary));
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 4s ease-in-out infinite;
+}
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ═══ Enhanced Hero Grid Background ═══ */
+.hero-grid-bg {
+  background-image:
+    linear-gradient(color-mix(in oklch, var(--color-primary) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklch, var(--color-primary) 4%, transparent) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, black 30%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, black 30%, transparent 100%);
+}
+
+/* ═══ Frosted stat card ═══ */
+.stat-card-frost {
+  background: color-mix(in oklch, var(--color-base-100) 70%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
+  box-shadow:
+    0 1px 3px color-mix(in oklch, var(--color-base-content) 3%, transparent),
+    inset 0 1px 0 color-mix(in oklch, var(--color-base-content) 4%, transparent);
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.stat-card-frost:hover {
+  border-color: color-mix(in oklch, var(--color-primary) 20%, transparent);
+  box-shadow:
+    0 4px 16px color-mix(in oklch, var(--color-primary) 8%, transparent),
+    0 8px 32px -8px color-mix(in oklch, var(--color-primary) 6%, transparent),
+    inset 0 1px 0 color-mix(in oklch, var(--color-primary) 8%, transparent);
+}
+
+/* ═══ Marquee-style category pill track ═══ */
+.category-pill {
+  position: relative;
+  overflow: hidden;
+}
+.category-pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  background: linear-gradient(135deg,
+    color-mix(in oklch, var(--color-primary) 12%, transparent),
+    color-mix(in oklch, var(--color-secondary, var(--color-primary)) 8%, transparent));
+  transition: opacity 0.3s ease;
+}
+.category-pill:hover::before {
+  opacity: 1;
+}
+
+/* ═══ Section divider with dot accent ═══ */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--color-base-content) 10%, transparent),
+    transparent
+  );
+}
+
+/* ═══ Feature card with colored top-border accent ═══ */
+.feature-accent-card {
+  position: relative;
+  overflow: hidden;
+}
+.feature-accent-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent-color, var(--color-primary));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.feature-accent-card:hover::before {
+  opacity: 1;
+}
+
+/* ═══ Floating badge with glow ═══ */
+.floating-badge {
+  animation: badge-float 3s ease-in-out infinite;
+}
+@keyframes badge-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* ═══ Sidebar brand shimmer ═══ */
+.brand-logo-ring {
+  position: relative;
+}
+.brand-logo-ring::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    color-mix(in oklch, var(--color-primary) 30%, transparent),
+    transparent,
+    color-mix(in oklch, var(--color-secondary, var(--color-primary)) 20%, transparent),
+    transparent
+  );
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.4s ease;
+  animation: brand-ring-spin 4s linear infinite;
+}
+.brand-logo-ring:hover::after {
+  opacity: 1;
+}
+@keyframes brand-ring-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ═══ Number counter highlight ═══ */
+.counter-highlight {
+  position: relative;
+  display: inline-block;
+}
+.counter-highlight::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--color-primary);
+  opacity: 0.12;
+  border-radius: 999px;
+  filter: blur(4px);
+}
+
+
+
+/* ═══ Gradient background ═══ */
+.gradient-bg {
+  background: linear-gradient(135deg,
+    color-mix(in oklch, var(--color-primary) 8%, var(--color-base-200)),
+    var(--color-base-200),
+    color-mix(in oklch, var(--color-secondary, var(--color-primary)) 5%, var(--color-base-200)));
+}
+
+
+
+
+
+/* ═══ Nav active ═══ */
+.nav-active {
+  background: linear-gradient(135deg,
+    color-mix(in oklch, var(--color-primary) 15%, transparent),
+    color-mix(in oklch, var(--color-primary) 8%, transparent));
+  border-color: color-mix(in oklch, var(--color-primary) 25%, transparent);
+}
+
+/* Prevent FOUC on accordion transitions */
+.overflow-hidden { will-change: height; }
+
+/* ═══ Markdown preview — Premium GitHub-style ═══ */
+.markdown-preview {
+  line-height: 1.8;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+.markdown-preview h1 {
+  @apply text-2xl font-extrabold mt-8 mb-4 pb-3;
+  border-bottom: 2px solid color-mix(in oklch, var(--color-primary) 20%, transparent);
+}
+.markdown-preview h2 {
+  @apply text-xl font-bold mt-7 mb-3 pb-2;
+  border-bottom: 1px solid color-mix(in oklch, var(--color-base-content) 10%, transparent);
+}
+.markdown-preview h3 { @apply text-lg font-bold mt-5 mb-2; }
+.markdown-preview h4 { @apply text-base font-bold mt-4 mb-1.5; }
+.markdown-preview h5 { @apply text-sm font-bold mt-3 mb-1; }
+.markdown-preview p { @apply mb-4; color: color-mix(in oklch, var(--color-base-content) 85%, transparent); }
+.markdown-preview ul { @apply list-disc list-inside mb-4 space-y-1.5; color: color-mix(in oklch, var(--color-base-content) 85%, transparent); }
+.markdown-preview ol { @apply list-decimal list-inside mb-4 space-y-1.5; color: color-mix(in oklch, var(--color-base-content) 85%, transparent); }
+.markdown-preview li > ul, .markdown-preview li > ol { @apply ml-5 mt-1.5 mb-0; }
+.markdown-preview li { line-height: 1.7; }
+.markdown-preview code {
+  @apply px-1.5 py-0.5 rounded-md text-[0.8125rem] font-mono;
+  background: color-mix(in oklch, var(--color-primary) 8%, var(--color-base-200));
+  color: var(--color-primary);
+  border: 1px solid color-mix(in oklch, var(--color-primary) 12%, transparent);
+}
+.markdown-preview pre {
+  @apply rounded-xl p-4 mb-5 overflow-x-auto text-[0.8125rem] leading-relaxed;
+  background: var(--color-neutral);
+  color: var(--color-neutral-content);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
+  box-shadow: 0 2px 8px color-mix(in oklch, var(--color-base-content) 6%, transparent);
+}
+.markdown-preview pre code { @apply bg-transparent px-0 py-0 border-0; color: inherit; font-size: inherit; }
+.markdown-preview blockquote {
+  @apply pl-4 mb-4 rounded-r-xl;
+  border-left: 4px solid var(--color-primary);
+  background: color-mix(in oklch, var(--color-primary) 5%, transparent);
+  padding: 0.875rem 1.125rem;
+  color: color-mix(in oklch, var(--color-base-content) 80%, transparent);
+}
+.markdown-preview blockquote p { @apply mb-1; }
+.markdown-preview blockquote strong { color: var(--color-base-content); }
+.markdown-preview a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+}
+.markdown-preview a:hover { opacity: 0.75; }
+/* Tables — polished GitHub-style */
+.markdown-preview table {
+  @apply w-full border-collapse mb-5 text-sm;
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 10%, transparent);
+  border-radius: 0.625rem;
+  overflow: hidden;
+}
+.markdown-preview th {
+  @apply px-4 py-2.5 text-left font-bold text-xs uppercase tracking-wider;
+  background: color-mix(in oklch, var(--color-base-200) 80%, transparent);
+  border-bottom: 2px solid color-mix(in oklch, var(--color-base-content) 10%, transparent);
+  color: color-mix(in oklch, var(--color-base-content) 70%, transparent);
+  letter-spacing: 0.05em;
+}
+.markdown-preview td {
+  @apply px-4 py-2.5 text-sm;
+  border-bottom: 1px solid color-mix(in oklch, var(--color-base-content) 6%, transparent);
+  color: color-mix(in oklch, var(--color-base-content) 80%, transparent);
+}
+.markdown-preview tr:last-child td { border-bottom: none; }
+.markdown-preview tr:hover td {
+  background: color-mix(in oklch, var(--color-primary) 3%, transparent);
+}
+/* Images — with better handling for badges */
+.markdown-preview img {
+  @apply max-w-full my-1;
+  display: inline-block;
+  vertical-align: middle;
+}
+.markdown-preview p > img,
+.markdown-preview a > img {
+  border-radius: 0.375rem;
+}
+/* Badge images inside paragraphs should be inline, no margin */
+.markdown-preview p > img[src*="shields.io"],
+.markdown-preview a > img[src*="shields.io"],
+.markdown-preview p > img[src*="badge"],
+.markdown-preview a > img[src*="badge"] {
+  margin: 0.125rem 0.125rem;
+  border-radius: 0.25rem;
+  display: inline-block;
+  box-shadow: none;
+  vertical-align: middle;
+}
+/* Screenshot/demo images should be larger and rounded */
+.markdown-preview img[alt*="screenshot" i],
+.markdown-preview img[alt*="demo" i],
+.markdown-preview img[alt*="preview" i] {
+  @apply rounded-xl shadow-lg my-4;
+  display: block;
+}
+.markdown-preview hr {
+  @apply my-8;
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    color-mix(in oklch, var(--color-base-content) 15%, transparent) 20%,
+    color-mix(in oklch, var(--color-primary) 20%, transparent) 50%,
+    color-mix(in oklch, var(--color-base-content) 15%, transparent) 80%,
+    transparent 100%
+  );
+}
+/* Task list (checkbox) support */
+.markdown-preview input[type="checkbox"] {
+  @apply mr-2 rounded;
+  vertical-align: middle;
+  pointer-events: none;
+  accent-color: var(--color-primary);
+}
+.markdown-preview li:has(> input[type="checkbox"]) { list-style: none; margin-left: -1.25rem; }
+/* Emphasis */
+.markdown-preview strong { font-weight: 700; color: var(--color-base-content); }
+.markdown-preview em { font-style: italic; }
+/* Centered div support (GitHub README uses <div align="center">) */
+.markdown-preview div[align="center"],
+.markdown-preview [align="center"] {
+  text-align: center;
+}
+.markdown-preview div[align="center"] h1,
+.markdown-preview div[align="center"] h2,
+.markdown-preview div[align="center"] h3 {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.markdown-preview div[align="center"] p {
+  display: inline-block;
+  text-align: center;
+  width: 100%;
+}
+/* Details/Summary — collapsible sections */
+.markdown-preview details {
+  @apply mb-3 rounded-xl;
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
+  background: color-mix(in oklch, var(--color-base-200) 30%, transparent);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+.markdown-preview details[open] {
+  border-color: color-mix(in oklch, var(--color-primary) 15%, transparent);
+  background: color-mix(in oklch, var(--color-primary) 2%, transparent);
+}
+.markdown-preview details summary {
+  @apply px-4 py-3 text-sm font-semibold cursor-pointer select-none;
+  transition: background 0.15s ease;
+}
+.markdown-preview details summary:hover {
+  background: color-mix(in oklch, var(--color-base-content) 4%, transparent);
+}
+.markdown-preview details > *:not(summary) {
+  @apply px-4;
+}
+.markdown-preview details > *:last-child {
+  @apply pb-3;
+}
+/* Sub elements inside paragraphs with align center */
+.markdown-preview sub {
+  font-size: 0.75em;
+  vertical-align: baseline;
+  opacity: 0.7;
+}
+/* Ensure nested tables within <td> work */
+.markdown-preview td img { margin: 0; display: inline-block; }
+
+/* ═══ Scrollbar thin ═══ */
+.scrollbar-thin { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--color-base-content) 15%, transparent) transparent; }
+.scrollbar-thin::-webkit-scrollbar { width: 4px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: color-mix(in oklch, var(--color-base-content) 15%, transparent); border-radius: 999px; }
+.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--color-base-content) 25%, transparent); }
+
+/* ═══ shadcn-style field label ═══ */
+.field-label {
+  @apply text-xs font-medium tracking-wide mb-1.5 block;
+  color: color-mix(in oklch, var(--color-base-content) 70%, transparent);
+}
+
+/* ═══ shadcn-style separator ═══ */
+.separator {
+  height: 1px;
+  background-color: color-mix(in oklch, var(--color-base-content) 10%, transparent);
+}
+/* ═══ shadcn-style section card — Glassmorphic ═══ */
+.section-card {
+  @apply rounded-xl border;
+  position: relative;
+  background: color-mix(in oklch, var(--color-base-100) 95%, transparent);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-color: color-mix(in oklch, var(--color-base-content) 10%, transparent);
+  box-shadow: 
+    0 1px 2px 0 color-mix(in oklch, var(--color-base-content) 3%, transparent),
+    0 4px 12px -2px color-mix(in oklch, var(--color-base-content) 2%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-base-content) 2%, transparent) inset;
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.section-card:hover {
+  box-shadow: 
+    0 2px 4px 0 color-mix(in oklch, var(--color-base-content) 4%, transparent),
+    0 10px 24px -4px color-mix(in oklch, var(--color-base-content) 5%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-primary) 10%, transparent) inset;
+  border-color: color-mix(in oklch, var(--color-primary) 18%, transparent);
+  transform: translateY(-1px);
+}
+/* ═══ Subtle ring on focused card ═══ */
+.focus-ring:focus-within {
+  box-shadow: 0 0 0 2px var(--color-base-100), 0 0 0 4px color-mix(in oklch, var(--color-primary) 25%, transparent);
+}
+
+/* ═══ Frosted glass panels ═══ */
+.glass-panel {
+  background: color-mix(in oklch, var(--color-base-100) 85%, transparent);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 6%, transparent);
+}
+
+/* Gradient separator line */
+.gradient-line {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklch, var(--color-primary) 20%, transparent) 50%,
+    transparent 100%
+  );
+}
+
+
+
+/* ═══ Smooth scrollbar on main content ═══ */
+main::-webkit-scrollbar { width: 6px; }
+main::-webkit-scrollbar-track { background: transparent; }
+main::-webkit-scrollbar-thumb { background: color-mix(in oklch, var(--color-base-content) 12%, transparent); border-radius: 999px; }
+main::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--color-base-content) 20%, transparent); }
+
+/* ═══ Floating shape animations ═══ */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-10px) rotate(2deg); }
+  66% { transform: translateY(5px) rotate(-1deg); }
+}
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(3deg); }
+}
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
+
+/* ═══ Professional Skeleton Loading ═══ */
+@keyframes skeleton-loading {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes skeleton-glow {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    105deg,
+    color-mix(in oklch, var(--color-base-content) 6%, var(--color-base-200)) 0%,
+    color-mix(in oklch, var(--color-base-content) 3%, var(--color-base-200)) 20%,
+    color-mix(in oklch, var(--color-base-content) 10%, var(--color-base-200)) 45%,
+    color-mix(in oklch, var(--color-base-content) 12%, var(--color-base-200)) 50%,
+    color-mix(in oklch, var(--color-base-content) 10%, var(--color-base-200)) 55%,
+    color-mix(in oklch, var(--color-base-content) 3%, var(--color-base-200)) 80%,
+    color-mix(in oklch, var(--color-base-content) 6%, var(--color-base-200)) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  border-radius: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Screen reader text for skeleton loaders */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Staggered skeleton animation for groups */
+.skeleton-stagger > .skeleton:nth-child(1) { animation-delay: 0ms; }
+.skeleton-stagger > .skeleton:nth-child(2) { animation-delay: 100ms; }
+.skeleton-stagger > .skeleton:nth-child(3) { animation-delay: 200ms; }
+.skeleton-stagger > .skeleton:nth-child(4) { animation-delay: 300ms; }
+.skeleton-stagger > .skeleton:nth-child(5) { animation-delay: 400ms; }
+.skeleton-stagger > .skeleton:nth-child(6) { animation-delay: 500ms; }
+
+/* ═══ Pulse glow effect ═══ */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px currentColor, 0 0 10px transparent; }
+  50% { box-shadow: 0 0 15px currentColor, 0 0 30px currentColor; }
+}
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+/* ═══ Shadow animation preview ═══ */
+@keyframes shadow-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+.animate-shadow-breathe { animation: shadow-breathe 3s ease-in-out infinite; }
+
+/* ═══ Gradient text shimmer ═══ */
+@keyframes text-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-text-shimmer {
+  background-size: 200% 200%;
+  animation: text-shimmer 3s ease-in-out infinite;
+}
+
+/* ═══ Typewriter cursor ═══ */
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.animate-blink { animation: blink-cursor 1s step-end infinite; }
+
+/* ═══ Fade in animation ═══ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* ═══ Slide in from left ═══ */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.4s ease-out forwards;
+}
+
+/* ═══ Better smooth scrolling behavior ═══ */
+@supports (scroll-behavior: smooth) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ═══ Improved focus styles for better accessibility ═══ */
+.focus-ring-inset:focus-within {
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+}
+
+/* ═══ Print styles for better tool output printing ═══ */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .glass-card, .glass-base, .section-card {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+  }
+}
+
+/* ═══ Safe area insets for mobile devices ═══ */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* ═══ Improved touch targets for mobile ═══ */
+@media (hover: none) and (pointer: coarse) {
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .btn-sm {
+    min-height: 40px;
+    min-width: 40px;
+  }
+  
+  .btn-xs {
+    min-height: 36px;
+    min-width: 36px;
+  }
+}
+
+/* ═══ Enhanced Button Variants ═══ */
+
+/* Icon-only button (square) — better padding */
+.btn-square.btn-xs {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  width: 1.875rem;
+}
+.btn-square.btn-sm {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  width: 2.25rem;
+}
+.btn-square {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  width: 2.625rem;
+}
+
+/* Pill button modifier — for CTA buttons */
+.btn-pill {
+  border-radius: 9999px;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.btn-pill.btn-sm {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+.btn-pill.btn-lg {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+/* Gradient primary button — attractive two-tone primary.
+   Uses background-image (not shorthand) so it can layer with btn-shimmer. */
+.btn-gradient-primary {
+  background-color: var(--color-primary);
+  background-image: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    color-mix(in oklch, var(--color-primary) 82%, var(--color-secondary, var(--color-primary))) 100%
+  );
+  border: none;
+  color: var(--color-primary-content) !important;
+}
+.btn-gradient-primary:hover {
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--color-primary) 92%, white) 0%,
+    color-mix(in oklch, var(--color-primary) 75%, var(--color-secondary, var(--color-primary))) 100%
+  );
+}
+
+/* Gradient shimmer on primary CTA buttons.
+   When combined with btn-gradient-primary, layers the shimmer ON TOP of the gradient
+   using CSS multiple background-image stacking. */
+@keyframes btn-shimmer {
+  0% { background-position: -200% 0, 0 0; }
+  100% { background-position: 200% 0, 0 0; }
+}
+.btn-shimmer {
+  background-size: 200% 100%, 100% 100%;
+  animation: btn-shimmer 3s ease-in-out infinite;
+}
+.btn-gradient-primary.btn-shimmer {
+  background-image:
+    linear-gradient(
+      110deg,
+      transparent 0%,
+      transparent 40%,
+      rgba(255, 255, 255, 0.12) 50%,
+      transparent 60%,
+      transparent 100%
+    ),
+    linear-gradient(
+      135deg,
+      var(--color-primary) 0%,
+      color-mix(in oklch, var(--color-primary) 82%, var(--color-secondary, var(--color-primary))) 100%
+    );
+}
+.btn-gradient-primary.btn-shimmer:hover {
+  background-image:
+    linear-gradient(
+      110deg,
+      transparent 0%,
+      transparent 40%,
+      rgba(255, 255, 255, 0.15) 50%,
+      transparent 60%,
+      transparent 100%
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--color-primary) 92%, white) 0%,
+      color-mix(in oklch, var(--color-primary) 75%, var(--color-secondary, var(--color-primary))) 100%
+    );
+}
+/* Standalone btn-shimmer (without gradient-primary) — just the shimmer overlay */
+.btn-shimmer:not(.btn-gradient-primary) {
+  background-image: linear-gradient(
+    110deg,
+    transparent 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.12) 50%,
+    transparent 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* ═══ Enhanced Section Card with subtle gradient border ═══ */
+.section-card-elevated {
+  @apply rounded-xl border;
+  background: color-mix(in oklch, var(--color-base-100) 97%, transparent);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  border-color: color-mix(in oklch, var(--color-base-content) 10%, transparent);
+  box-shadow: 
+    0 1px 3px 0 color-mix(in oklch, var(--color-base-content) 4%, transparent),
+    0 6px 20px -4px color-mix(in oklch, var(--color-base-content) 3%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-base-content) 2%, transparent) inset;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.section-card-elevated:hover {
+  box-shadow: 
+    0 2px 6px 0 color-mix(in oklch, var(--color-base-content) 5%, transparent),
+    0 12px 32px -6px color-mix(in oklch, var(--color-base-content) 5%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-primary) 10%, transparent) inset;
+  border-color: color-mix(in oklch, var(--color-primary) 18%, transparent);
+  transform: translateY(-1px);
+}
+
+/* ═══ Glow ring for icon badges ═══ */
+.icon-badge {
+  position: relative;
+}
+.icon-badge::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 20%, transparent), color-mix(in oklch, var(--color-secondary, var(--color-primary)) 15%, transparent));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.icon-badge:hover::after,
+.group:hover .icon-badge::after {
+  opacity: 1;
+}
+
+/* Smooth color transition for interactive elements */
+.interactive-lift {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.interactive-lift:hover {
+  transform: translateY(-2px);
+}
+.interactive-lift:active {
+  transform: translateY(0px) scale(0.98);
+}
+
+/* ═══ Card shine sweep effect ═══ */
+.card-shine {
+  position: relative;
+  overflow: hidden;
+}
+.card-shine::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--color-base-content) 4%, transparent),
+    transparent
+  );
+  transition: none;
+  pointer-events: none;
+  z-index: 1;
+}
+.card-shine:hover::before {
+  animation: shine-sweep 0.8s ease-in-out;
+}
+@keyframes shine-sweep {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+/* ═══ Staggered entrance animation ═══ */
+.animate-entrance {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: entrance-reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--delay, 0ms);
+}
+@keyframes entrance-reveal {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══ Progress bar for toast auto-dismiss ═══ */
+.progress-bar-dismiss {
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  animation: progress-bar-shrink linear forwards;
+}
+@keyframes progress-bar-shrink {
+  0% { width: 100%; }
+  100% { width: 0%; }
+}
+
+/* ═══ Animated gradient border on hover ═══ */
+.gradient-border-hover {
+  position: relative;
+}
+.gradient-border-hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary, var(--color-primary)), var(--color-primary));
+  background-size: 200% 200%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.gradient-border-hover:hover::after {
+  opacity: 1;
+  animation: gradient-border-spin 3s ease infinite;
+}
+@keyframes gradient-border-spin {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ═══ Ambient background blobs ═══ */
+.ambient-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  will-change: transform;
+}
+.ambient-blob-1 {
+  animation: blob-float 20s ease-in-out infinite;
+}
+.ambient-blob-2 {
+  animation: blob-float-reverse 25s ease-in-out infinite;
+}
+@keyframes blob-float {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-15px, 15px) scale(0.95); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+@keyframes blob-float-reverse {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-25px, 15px) scale(0.95); }
+  66% { transform: translate(20px, -10px) scale(1.08); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* ═══ Header gradient accent line ═══ */
+.header-accent-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklch, var(--color-primary) 25%, transparent) 30%,
+    color-mix(in oklch, var(--color-secondary, var(--color-primary)) 20%, transparent) 70%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: gradient-shift 6s ease-in-out infinite;
+}
+
+/* ═══ Sidebar active indicator animation ═══ */
+.nav-active-bar {
+  width: 3px;
+  transition: height 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ═══ Keyboard shortcut badge ═══ */
+.kbd-hint {
+  @apply text-[10px] font-mono opacity-25 px-1.5 py-0.5 rounded-md;
+  background: color-mix(in oklch, var(--color-base-content) 6%, transparent);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
+}
+
+/* ═══ Pulsing CTA glow ═══ */
+.cta-glow {
+  position: relative;
+}
+.cta-glow::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: var(--color-primary);
+  opacity: 0;
+  filter: blur(16px);
+  z-index: -1;
+  transition: opacity 0.4s ease;
+}
+.cta-glow:hover::before {
+  opacity: 0.15;
+}
+
+/* ═══ Professional micro-interactions ═══ */
+
+/* Smooth image loading — fade in when loaded */
+img[loading="lazy"] {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+img[loading="lazy"].loaded,
+img[loading="lazy"][src] {
+  opacity: 1;
+}
+
+/* Glow pulse for loading states */
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* ═══ Tooltip styles ═══ */
+.tooltip-custom {
+  position: relative;
+}
+.tooltip-custom::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  padding: 0.375rem 0.625rem;
+  background: var(--color-neutral);
+  color: var(--color-neutral-content);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.15s ease;
+  z-index: 50;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.tooltip-custom:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+/* ═══ Page loading shimmer overlay ═══ */
+@keyframes page-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.page-loading-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.page-loading-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklch, var(--color-primary) 3%, transparent) 50%,
+    transparent 100%
+  );
+  animation: page-shimmer 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ═══ Better disabled button states ═══ */
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+  filter: grayscale(20%);
+  pointer-events: none;
+}
+
+/* ═══ Smooth color theme transitions ═══ */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 0ms;
+}
+
+/* Only animate theme transitions on specific elements */
+body,
+.bg-base-100,
+.bg-base-200,
+.bg-base-300,
+.bg-primary,
+.border-base-300,
+.text-base-content,
+.text-primary {
+  transition-duration: 200ms;
+}
+
+/* ═══ Focus trap outline for modals ═══ */
+[role="dialog"]:focus {
+  outline: none;
+}
+
+/* ═══ Improved table styles ═══ */
+.table th {
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  font-weight: 700;
+}
+.table td {
+  font-size: 0.8125rem;
+}
+.table tr {
+  transition: background-color 0.15s ease;
+}
+
+/* ═══ Code block enhancements ═══ */
+code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+pre {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+/* ═══ Smooth resize observer transitions ═══ */
+.resize-transition {
+  transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              height 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ═══ Enhanced Hero Search Bar ═══ */
+.hero-search-input {
+  background: color-mix(in oklch, var(--color-base-100) 90%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+/* ═══ Enhanced section heading underline accent ═══ */
+.section-heading-accent {
+  position: relative;
+  display: inline-block;
+}
+.section-heading-accent::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 10%;
+  right: 10%;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary, var(--color-primary)));
+  opacity: 0.4;
+}
+
+/* ═══ Tool icon preview grid in category cards ═══ */
+.tool-icon-grid {
+  display: flex;
+  gap: 0.375rem;
+}
+.tool-icon-grid > * {
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.group:hover .tool-icon-grid > *:nth-child(1) { transform: translateY(-2px); }
+.group:hover .tool-icon-grid > *:nth-child(2) { transform: translateY(-2px); transition-delay: 50ms; }
+.group:hover .tool-icon-grid > *:nth-child(3) { transform: translateY(-2px); transition-delay: 100ms; }
+.group:hover .tool-icon-grid > *:nth-child(4) { transform: translateY(-2px); transition-delay: 150ms; }
+
+/* ═══ Improved card hover states with backdrop glow ═══ */
+.card-glow-hover {
+  position: relative;
+}
+.card-glow-hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  box-shadow: 
+    0 0 40px -10px color-mix(in oklch, var(--color-primary) 15%, transparent);
+}
+.card-glow-hover:hover::after {
+  opacity: 1;
+}
+
+/* ═══ Subtle breathing animation for hero elements ═══ */
+@keyframes subtle-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.01); }
+}
+.animate-subtle-breathe {
+  animation: subtle-breathe 4s ease-in-out infinite;
+}
+
+/* ═══ Staggered list reveal for search results ═══ */
+@keyframes search-result-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.search-result-item {
+  animation: search-result-in 0.2s ease-out forwards;
+}
+.search-result-item:nth-child(1) { animation-delay: 0ms; }
+.search-result-item:nth-child(2) { animation-delay: 40ms; }
+.search-result-item:nth-child(3) { animation-delay: 80ms; }
+.search-result-item:nth-child(4) { animation-delay: 120ms; }
+.search-result-item:nth-child(5) { animation-delay: 160ms; }
+
+/* ═══ Missing animation: pulse-soft for Live indicator ═══ */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* ═══ Missing animation: shimmer-sweep for active step nav ═══ */
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.shimmer-sweep {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.12) 50%,
+    transparent 100%
+  );
+  animation: shimmer-sweep 2.5s ease-in-out infinite;
+}
+

@@ -1,0 +1,49 @@
+# VS Code Extension packaging ignore rules
+# ─────────────────────────────────────────
+# Files/folders NOT included in the published .vsix.
+# dist/ and assets/ ARE included (required at runtime).
+
+# Source (compiled into dist/ — not needed at runtime)
+src/**
+ext-src/**
+public/**
+
+# Build & config tooling (correct .cjs extensions)
+vite.config.js
+vite.webview.config.js
+esbuild.config.cjs
+postcss.config.cjs
+tailwind.config.cjs
+jsconfig.json
+components.json
+eslint.config.js
+.eslintrc*
+
+# Dependency & lock files
+node_modules/**
+package-lock.json
+
+# Tests & coverage
+**/*.test.*
+**/*.spec.*
+coverage/**
+
+# Source maps
+**/*.map
+
+# Environment files
+.env*
+
+# Root index.html (Vite dev entry — not needed in extension)
+index.html
+
+# Editor & OS metadata
+.vscode/**
+.zcode/**
+.gitignore
+.git/**
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
