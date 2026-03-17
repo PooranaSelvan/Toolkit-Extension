@@ -5,7 +5,7 @@
 No browser needed. No sign-ups. No data collection. Everything runs client-side inside a VS Code webview panel.
 
 [![VS Code](https://img.shields.io/badge/VS%20Code-v1.51%2B-blue?logo=visualstudiocode)](https://code.visualstudio.com/)
-[![Version](https://img.shields.io/badge/version-1.5.5-brightgreen)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.6.1-brightgreen)](./CHANGELOG.md)
 
 ---
 
@@ -17,10 +17,10 @@ No browser needed. No sign-ups. No data collection. Everything runs client-side 
 | **README Generator** | Generate professional README.md with templates, badge builder, GitHub import & quality scoring |
 | **API Tester** | Test REST & WebSocket APIs with environments, assertions, bulk runner, diff & code generation |
 | **Mock API Generator** | Generate fake REST APIs with realistic data for testing |
-| **JWT Toolkit** | Decode, verify, build & audit JSON Web Tokens |
+| **JWT Toolkit** | Decode, verify, build & audit JSON Web Tokens with collapsible sections |
 | **JSON Formatter** | Format, validate, minify & transform JSON data |
 | **Regex Generator** | Build & test regex patterns with live preview |
-| **Password Generator** | Generate secure passwords, passphrases & PINs with entropy scoring |
+| **Password Generator** | Generate secure passwords, passphrases & PINs with real crack-time estimates |
 
 ### 🎨 Frontend Tools (5)
 | Tool | Description |
@@ -34,7 +34,7 @@ No browser needed. No sign-ups. No data collection. Everything runs client-side 
 ### 📚 Learning Tools (5)
 | Tool | Description |
 |------|-------------|
-| **Sorting Visualizer** | Learn sorting algorithms with step-by-step visual animations |
+| **Sorting Visualizer** | Learn sorting algorithms with gradient-colored bars, CSS animations, celebration effects & real-time stats |
 | **Recursion Visualizer** | Visualize recursive function calls as animated trees |
 | **Event Loop Visualizer** | See the JavaScript event loop, call stack & queues in action |
 | **Flexbox Playground** | Learn CSS Flexbox interactively with live visual results |
@@ -77,9 +77,11 @@ No manual theme switching required — it just follows your editor.
 - **⚡ Lightning Fast** — No network requests. Everything processes client-side.
 - **🌐 Works Offline** — All tools function without an internet connection.
 - **🎯 VS Code Native** — Runs in a webview panel, fully integrated with the IDE.
-- **🎨 Auto Theme Sync** — Automatically matches your VS Code light/dark theme.
+- **🎨 Auto Theme Sync** — Automatically matches your VS Code light/dark theme with WCAG AA contrast enforcement.
 - **📋 Clipboard & File Integration** — Copy results to clipboard and save files via VS Code dialogs.
 - **🖥️ Active Editor Integration** — Read from and write to your active editor.
+- **⭐ Favorites & Recents** — Star your most-used tools and access recent tools from the sidebar.
+- **📐 Collapsible Sidebar** — Toggle the sidebar between full-width and compact icon-only mini mode.
 
 ---
 
@@ -122,53 +124,41 @@ See the [GitHub Issues](https://github.com/PooranaSelvan/Toolkit-Extension/issue
 
 See [CHANGELOG.md](./CHANGELOG.md) for the full release history.
 
-### 1.5.5 (Latest)
+### 1.6.1 (Latest)
+- **Sorting Visualizer** — Complete visual overhaul with gradient-colored bars, CSS animations, memoized `Bar` component, celebration confetti on completion, and real-time elapsed timer
+- **WCAG Contrast Enforcement** — Theme system now guarantees AA-compliant (4.5:1) text contrast and distinguishable surface colors for all VS Code themes
+- **UI Polish** — Raised text/icon opacity across all components, added hover micro-interactions (rotate, scale, glow rings), refined glass surfaces and shadows
+- **Header** — Clickable category breadcrumbs, restored `backdrop-blur-xl` glassmorphism, gradient icon containers
+- Fixed Password Generator duplicate crack-time computation, JWT collapsible section height glitch, SQL parser alias precedence, and several minor bugs
+
+### 1.6.0
+- **Sidebar Mini Mode** — Collapsible sidebar that shrinks to a 60px icon rail on desktop with hover tooltips
+- **Sidebar Favorites** — Star/unstar tools with persistent favorites section at the top of navigation
+- **Sidebar Recents** — Automatically tracks the 5 most recently visited tools for quick access
+- **Sidebar Collapse All** — One-click button to collapse all expanded tool categories
+
+### 1.5.5
 - Removed MIT license from the project
 - Updated version to 1.5.5 across all project files
-- Updated CHANGELOG and README documentation
 
 ### 1.5.2
-- Removed **Frontend Playground** tool entirely — reduced bundle size by removing CodeMirror 6 and all associated dependencies
-- Updated tool counts, documentation, extension sidebar, and QuickPick items
+- Removed **Frontend Playground** tool — reduced bundle size by removing CodeMirror 6 and all dependencies
 
 ### 1.5.1
-- Fixed UI lag from expensive `filter: blur()` CSS animations in page transitions
-- Fixed `AnimatePresence mode="wait"` blocking navigation for 350ms+ on route change
-- Fixed sidebar categories collapsed by default — all categories now open on load
-- Removed per-tool stagger animations and `layoutId` layout thrashing in sidebar
-- Fixed sidebar search dropdown overlapping tool links
-- Removed 10+ infinite Framer Motion and CSS animations from decorative elements
-- Replaced expensive `backdrop-blur` on header and sidebar with lighter alternatives
-- Expanded test suite from 47 to 66 tests
+- Fixed UI lag from expensive CSS animations and `AnimatePresence mode="wait"` blocking navigation
+- Removed 10+ infinite animations, fixed sidebar accessibility, expanded test suite to 66 tests
 
 ### 1.5.0
-- Fixed hardcoded version in sidebar — now auto-sourced from `package.json` via build-time injection
-- Theme auto-syncs with VS Code (light/dark) — removed manual theme selector
-- Fixed XSS vulnerability in webview route injection using `JSON.stringify()`
-- Removed redundant clipboard fallback in `useCopyToClipboard` hook
-- Fixed toast notification accumulation — added `useRef` ID counter and `MAX_TOASTS` limit
-- Fixed SQL engine mutating original table data on INSERT/UPDATE/DELETE
-- Fixed `safeLocalStorage` deleting unrelated keys on quota error
-- Fixed UTF-8 Base64 decoding for multibyte characters in GitHub service
-- Added `.cancel()` method to debounce utility for proper `useEffect` cleanup
-- Added shared `IntersectionObserver` singleton for lazy-loaded images
-- Added bug-fix verification test suite (`tests/run-tests.mjs`)
+- Auto-sourced version from `package.json`, VS Code theme auto-sync, XSS fix, 10 bug fixes, test suite added
 
 ### 1.4.0
-- Replaced broken `confirm()` dialogs in README Generator and Regex Generator with inline confirmation UI
-- Replaced deprecated `unescape()`/`escape()` with modern `TextEncoder`/`TextDecoder` APIs
-- Cleaned up unused imports and dead code
+- Replaced broken `confirm()` dialogs with inline UI, replaced deprecated `unescape()`/`escape()` APIs
 
 ### 1.3.1
-- Fixed clipboard paste buttons in JSON Formatter and JWT Decoder for VS Code webview
-- Fixed README Generator share URL clipboard write using VS Code clipboard bridge
-- Fixed Particles component animation memory leak on unmount
+- Fixed clipboard operations and memory leaks in VS Code webview
 
 ### 1.3.0
-- Fixed webview panel not opening inside VS Code (code splitting → single bundle)
-- Extended VS Code version compatibility to v1.51.0+
-- Fixed sidebar version badge, GitHub repo URLs, external link handling
-- Replaced `window.confirm()` with inline confirmation for VS Code webview compatibility
+- Fixed webview panel loading (single bundle), extended VS Code compatibility to v1.51.0+
 
 ### 1.2.1
 - Fixed webview asset loading, CSP, crossorigin attributes, error boundary

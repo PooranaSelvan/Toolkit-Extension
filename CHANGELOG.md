@@ -5,6 +5,57 @@ All notable changes to the **WebToolKit Toolbox** (Developer Toolbox) extension 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2025-07-20
+
+### Enhanced
+- **Sorting Visualizer — Complete Visual Overhaul** — Redesigned the entire Sorting Visualizer with gradient-colored bars (each algorithm has a unique color scheme), GPU-friendly CSS animations for active/swap/sorted states, a memoized `Bar` component (`React.memo`) for rendering performance, and a dot-grid visualization area background. Bars now show value labels (for arrays ≤ 25), glow rings on active comparisons, and a celebration sequence with confetti particles when sorting completes
+- **Sorting Visualizer — Algorithm Identity** — Each sorting algorithm (Selection, Bubble, Insertion, Merge) now has a unique `color` and `gradient` property displayed in the algorithm picker cards, progress bar, and phase badges for stronger visual identity
+- **Sorting Visualizer — Completion Celebration** — Added a "Sorted!" celebration card with confetti overlay animation when sorting finishes, plus a staggered bar brightness wave (`sv-celebration-bar`) that ripples across all bars on completion
+- **Sorting Visualizer — Stats Panel** — Added real-time elapsed timer and improved stat display with colored icon badges for comparisons, swaps, array accesses, and time
+- **VS Code Theme WCAG Contrast Enforcement** — `ThemeContext` now ensures `base-content` (foreground text) meets WCAG AA 4.5:1 contrast ratio against `base-100` (background) via a new `ensureContentContrast()` function. If a VS Code theme produces low-contrast text, the color is iteratively adjusted toward white (dark themes) or black (light themes) until the target ratio is met
+- **VS Code Theme Surface Distinguishability** — Added `ensureSurfaceStep()` to guarantee `base-200` and `base-300` are visually distinct from `base-100`. Many VS Code themes have sidebar/activity bar colors nearly identical to the editor background — this forces a minimum luminance step between surfaces
+- **VS Code Theme CSS Overrides** — Added `[data-theme=vscode]` CSS rules to enforce minimum text contrast on badge-ghost elements, form placeholders, table headers, and keyboard hint badges that Tailwind's opacity modifiers (`text-base-content/50`) would otherwise make invisible
+- **UI Text Contrast — Global Opacity Bump** — Increased text/icon opacity values across all major components (Sidebar, Header, Dashboard, HomePage, EmptyState, ToolCard, LazyImage) from the `0.15–0.35` range to `0.30–0.60` for significantly better readability, especially on non-default VS Code themes
+- **Header — Breadcrumb Enhancements** — Category breadcrumb is now a clickable `<Link>` to the Dashboard filtered by that category. Tool icon containers use rounded-xl with a subtle gradient and ring. Added `ArrowRight` icon to the Dashboard button on the homepage
+- **Header — Glassmorphism Restored** — Re-enabled `backdrop-blur-xl` on the header with a translucent `bg-base-100/80` background and refined multi-layer box-shadow for a polished floating appearance
+- **Card & Surface Polish** — Added hover corner-accent gradients (top-right glow), ring borders on icon containers, `group-hover:rotate-[-3deg]` micro-interactions, `group-hover:scale-110` on icons, directional arrow animations (`translate-x-0.5`), and stronger `hover:shadow-xl` across ToolCard, ToolShowcaseCard, FeatureCard, and CategoryShowcaseCard
+- **Glass & Surface Refinements** — Fine-tuned opacity percentages, border colors, and box-shadow layers for `.glass-card`, `.glass-elevated`, `.glass-highlight`, `.stat-card-frost`, and `.section-card` CSS classes to create more refined surface hierarchy
+- **Sidebar — Improved Border & Shadow** — Sidebar border reduced to `border-base-300/30` and desktop shadow changed to a directional `shadow-[2px_0_16px_-4px_rgba(0,0,0,0.06)]`. Brand header gets a subtle `bg-base-100/50` tint. Logo now uses `bg-gradient-to-br from-primary to-primary/90`
+- **Input Field Placeholder Contrast** — Global placeholder color bumped from 35% to 45% mix, and sidebar search input uses explicit `placeholder:text-base-content/40` with focus ring styling
+- **AppLayout — Third Ambient Blob** — Added a centered accent-colored ambient blob at 1.5% opacity for more visual depth in the background gradient overlay
+- **FeatureCard & ToolShowcaseCard — Scroll Animations** — FeatureCard now uses `motion.div` with `whileInView` for staggered scroll-triggered entrance animations with viewport margin detection
+
+### Fixed
+- **Password Generator — Duplicate Crack-Time Calculation** — The `calcStrength()` function returned hardcoded crack-time strings ("Instant", "Minutes", etc.) while `estimateCrackTime()` separately computed a precise estimate. The display called `estimateCrackTime()` again on render. Unified by calling `estimateCrackTime(entropy)` once inside `calcStrength()` and storing the result in the returned object
+- **JWT Decoder — Collapsible Section Height Glitch** — `CollapsibleSection` calculated `maxHeight` from `contentRef.current.scrollHeight` at toggle time, but this stale value didn't update when section content changed dynamically (e.g., switching JWT tabs). Added `ResizeObserver` to reactively track content height changes and a `contentHeight` state variable for smooth accordion animations
+- **SQL Parser — Table Alias Precedence Bug** — The `parseSelect()` function checked for an implicit alias (bare `IDENT` token) before checking for an explicit `AS` alias. If a query used `FROM table AS alias`, the `AS` keyword was consumed as an implicit alias. Reordered: explicit `AS` alias is now checked first, then implicit `IDENT` alias
+- **Sidebar — Redundant Recent-Tool Updates** — Visiting an already most-recent tool triggered a `setRecents` state update and `localStorage.setItem` write on every navigation even though the order wouldn't change. Added an early `if (prev[0] === currentTool.id) return prev` guard to skip the update entirely
+- **useLocalStorage — Key-Change Data Loss** — When the `key` parameter changed (e.g., switching between tool instances), any pending debounced write for the old key was silently discarded. Added a `keyRef` tracking effect that flushes the pending write for the *previous* key before switching, and fixed the unmount cleanup to use `keyRef.current` instead of the stale closure `key`
+- **SEO Component — Unnecessary Work in Webview** — `SEO.jsx` computed `window.location.origin` and ran meta-tag DOM manipulation inside VS Code webview where it has no effect. Moved the `isVsCodeWebview()` check before the URL computation and made it a stable value instead of calling the detection function on every render
+- **vscodeApi — Silent Clipboard Failure** — `copyToClipboard()` returned `true` unconditionally after calling `postMessage()`, even if `postMessage()` itself failed (no VS Code API available). Now checks the return value of `postMessage()` and returns `false` on failure
+- **Extension CSP — Overly Permissive connect-src** — Content Security Policy allowed `ws:` and `wss:` protocols in `connect-src` which are not needed by the extension. Tightened to `https: http:` only
+
+### Changed
+- Version bumped to `1.6.1` across `package.json`
+
+---
+
+## [1.6.0] - 2025-07-19
+
+### Added
+- **Sidebar — Collapsible Mini Mode** — Desktop sidebar can now be collapsed to a 60px icon-only rail via a toggle button. State persists in `localStorage` (`sidebar_collapsed`). Mini mode shows icon-only nav items with hover tooltips (`MiniTooltip` component). Sidebar width is exposed as `--sidebar-width` CSS custom property for the main content area to respect
+- **Sidebar — Favorites** — Users can star/unstar any tool directly from the sidebar. Favorites are persisted in `localStorage` (`sidebar_favorites`) and displayed in a dedicated "Favorites" section at the top of the nav with a ⭐ Star icon. Favorite stars appear on hover for non-favorited tools and stay visible for favorited ones
+- **Sidebar — Recent Tools** — The sidebar now tracks the 5 most recently visited tools (persisted in `localStorage` — `sidebar_recents`) and displays them in a "Recent" section with a 🕒 Clock icon, giving quick access to frequently used tools
+- **Sidebar — Collapse All Categories** — Added a `ChevronsDownUp` button in the categories header to collapse all expanded tool categories at once
+- **Sidebar — Mini-Mode Tooltips** — When the sidebar is in collapsed/mini mode, hovering over any nav icon shows a floating tooltip with the tool name, positioned to the right of the sidebar with a directional arrow
+
+### Changed
+- **Sidebar — Complete Architecture Rewrite** — Refactored the entire `Sidebar.jsx` from a simple nav list into a feature-rich navigation panel with dedicated sections (Brand, Search, Favorites, Recents, Categories, Footer), modular helper functions (`loadJSON`/`saveJSON`), and clean separation of concerns via constants and dedicated state hooks
+- **Sidebar — Width System** — Sidebar width is now dynamic (`SIDEBAR_FULL_W = 272px`, `SIDEBAR_MINI_W = 60px`) instead of hardcoded. The active width is communicated to `AppLayout` via the `--sidebar-width` CSS custom property
+- **ToolCard — Compact Variant Arrow** — Added a trailing `ArrowRight` icon that appears on hover in the compact ToolCard variant for better affordance
+
+---
+
 ## [1.5.5] - 2025-07-19
 
 ### Removed
