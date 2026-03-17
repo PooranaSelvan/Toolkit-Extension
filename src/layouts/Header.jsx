@@ -68,7 +68,10 @@ export default function Header({ onMenuToggle, isSidebarOpen = false }) {
             <ChevronRight size={12} className="text-base-content/15 hidden sm:block shrink-0" aria-hidden="true" />
             {toolCategory && (
               <>
-                <span className="text-[11px] font-medium text-base-content/30 hidden lg:inline shrink-0 truncate max-w-[120px]">{toolCategory.emoji} {toolCategory.label}</span>
+                <span className="text-[11px] font-medium text-base-content/30 hidden lg:inline-flex items-center gap-1.5 shrink-0 truncate max-w-[140px]">
+                  {toolCategory.icon && (() => { const CatIcon = toolCategory.icon; return <CatIcon size={11} strokeWidth={2} className="shrink-0" />; })()}
+                  {toolCategory.label}
+                </span>
                 <ChevronRight size={12} className="text-base-content/15 hidden lg:block shrink-0" aria-hidden="true" />
               </>
             )}

@@ -92,8 +92,9 @@ export default function ToolCard({ tool, showCategory = true, variant = 'default
             </p>
             {category && (
               <div className="mt-3 flex items-center gap-2">
-                <span className="badge badge-ghost badge-xs gap-1 text-base-content/35 font-medium">
-                  <span aria-hidden="true">{category.emoji}</span> {category.label}
+                <span className="badge badge-ghost badge-xs gap-1.5 text-base-content/35 font-medium">
+                  {category.icon && (() => { const CatIcon = category.icon; return <CatIcon size={10} strokeWidth={2} aria-hidden="true" className="shrink-0" />; })()}
+                  {category.label}
                 </span>
               </div>
             )}

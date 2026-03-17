@@ -1451,6 +1451,35 @@ main::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--colo
   transition: height 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* ═══ Enhanced sidebar nav items ═══ */
+.sidebar-nav-item {
+  position: relative;
+}
+.sidebar-nav-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  background: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 4%, transparent), transparent);
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+.sidebar-nav-item:hover::before {
+  opacity: 1;
+}
+.sidebar-active-item::before {
+  opacity: 1;
+  background: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 6%, transparent), color-mix(in oklch, var(--color-primary) 2%, transparent));
+}
+.sidebar-active-bar {
+  animation: sidebar-bar-enter 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes sidebar-bar-enter {
+  from { height: 0; opacity: 0; }
+  to { height: 20px; opacity: 1; }
+}
+
 /* ═══ Keyboard shortcut badge ═══ */
 .kbd-hint {
   @apply text-[10px] font-mono opacity-25 px-1.5 py-0.5 rounded-md;

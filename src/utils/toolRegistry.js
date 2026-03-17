@@ -5,6 +5,7 @@ import {
   Lock,
   GraduationCap, GitBranch, RefreshCw,
   Columns3, Database,
+  Wrench, Paintbrush, BookOpen, SlidersHorizontal,
 } from 'lucide-react';
 
 const TOOLS = [
@@ -181,10 +182,10 @@ const TOOLS = [
 ];
 
 export const CATEGORIES = [
-  { id: 'developer', label: 'Developer Tools', emoji: '🛠️' },
-  { id: 'frontend', label: 'Frontend Tools', emoji: '🎨' },
-  { id: 'learning', label: 'Learning', emoji: '📚' },
-  { id: 'preferences', label: 'Preferences', emoji: '⚙️' },
+  { id: 'developer', label: 'Developer Tools', emoji: '🛠️', icon: Wrench },
+  { id: 'frontend', label: 'Frontend Tools', emoji: '🎨', icon: Paintbrush },
+  { id: 'learning', label: 'Learning', emoji: '📚', icon: BookOpen },
+  { id: 'preferences', label: 'Preferences', emoji: '⚙️', icon: SlidersHorizontal },
 ];
 
 export const getTools = () => TOOLS;

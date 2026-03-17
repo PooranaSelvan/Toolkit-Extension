@@ -89,7 +89,7 @@ export default function AppLayout() {
       <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
 
       <div
-        className="min-h-screen min-h-[100dvh] flex flex-col transition-[margin] duration-300 ease-out lg:ml-[272px]"
+        className="min-h-screen min-h-[100dvh] flex flex-col transition-[margin] duration-300 ease-out lg:ml-[var(--sidebar-width,272px)]"
       >
         <Header onMenuToggle={toggleSidebar} isSidebarOpen={sidebarOpen} />
         <main
