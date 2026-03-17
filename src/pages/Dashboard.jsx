@@ -101,7 +101,7 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="relative text-center mb-12 pt-4 pb-8"
+        className="relative text-center mb-10 pt-4 pb-6"
       >
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
           <div
@@ -114,21 +114,21 @@ export default function Dashboard() {
           />
         </div>
 
-        <div className="relative w-20 h-20 mx-auto mb-6">
-          <div className="absolute inset-[-8px] rounded-[24px] bg-primary/8 animate-glow-pulse blur-lg" />
-          <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/25 relative overflow-hidden group/logo cursor-pointer transition-transform duration-300 hover:scale-105">
-            <Wrench size={36} className="text-primary-content relative z-10 transition-transform duration-300 group-hover/logo:rotate-[-8deg]" />
+        <div className="relative w-18 h-18 mx-auto mb-5">
+          <div className="absolute inset-[-8px] rounded-[22px] bg-primary/8 blur-lg" />
+          <div className="w-[72px] h-[72px] rounded-2xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/25 relative overflow-hidden group/logo cursor-pointer transition-transform duration-300 hover:scale-105">
+            <Wrench size={32} className="text-primary-content relative z-10 transition-transform duration-300 group-hover/logo:rotate-[-8deg]" />
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover/logo:opacity-100 transition-opacity duration-300" />
           </div>
-          <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-lg bg-secondary flex items-center justify-center shadow-md ring-2 ring-base-200">
-            <Sparkles size={14} className="text-secondary-content" />
+          <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-secondary flex items-center justify-center shadow-md ring-2 ring-base-200">
+            <Sparkles size={12} className="text-secondary-content" />
           </div>
         </div>
 
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4 tracking-tight leading-tight">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-3 tracking-tight leading-tight">
           Developer <span className="gradient-text-animated">Toolbox</span>
         </h1>
-        <p className="max-w-lg mx-auto text-sm sm:text-base opacity-50 leading-relaxed">
+        <p className="max-w-lg mx-auto text-sm opacity-60 leading-relaxed">
           {tools.length} free, fast, and privacy-first developer utilities — all running client-side.
         </p>
       </motion.div>
@@ -141,7 +141,7 @@ export default function Dashboard() {
         className="mb-8"
       >
         <div className={`relative max-w-xl mx-auto transition-all duration-300 ${searchFocused ? 'scale-[1.01]' : 'scale-100'}`}>
-          <Search size={18} className={`absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-200 ${searchFocused ? 'text-primary opacity-70 scale-105' : 'opacity-30'}`} />
+          <Search size={17} className={`absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-200 ${searchFocused ? 'text-primary opacity-80 scale-105' : 'opacity-25'}`} />
           <input
             ref={searchRef}
             type="text"
@@ -149,22 +149,22 @@ export default function Dashboard() {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}
-            placeholder="Search tools... (e.g. JSON, color, API, hash)"
+            placeholder="Search tools... (e.g. JSON, color, API, regex)"
             aria-label="Search all tools"
-            className="input w-full pl-11 pr-24 h-12 text-sm rounded-2xl shadow-sm border-base-300/40 bg-base-100 focus:shadow-lg focus:shadow-primary/10 focus:border-primary/30 transition-all duration-300"
+            className="input w-full pl-11 pr-24 h-12 text-sm rounded-2xl border-base-300/30 bg-base-100/90 shadow-sm focus:shadow-xl focus:shadow-primary/8 focus:border-primary/25 focus:bg-base-100 transition-all duration-300 ring-1 ring-base-300/10 focus:ring-primary/20"
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
             {query && (
-              <button 
-                onClick={() => setQuery('')} 
-                className="btn btn-ghost btn-xs btn-circle"
+              <button
+                onClick={() => setQuery('')}
+                className="btn btn-ghost btn-xs btn-circle opacity-40 hover:opacity-80"
                 aria-label="Clear search"
               >
                 <X size={14} />
               </button>
             )}
-            <kbd className="kbd kbd-xs opacity-30 hidden sm:inline-flex gap-0.5">
-              <Command size={10} />K
+            <kbd className="kbd kbd-xs opacity-20 hidden sm:inline-flex gap-0.5 font-mono">
+              <Command size={9} />K
             </kbd>
           </div>
         </div>
@@ -178,23 +178,24 @@ export default function Dashboard() {
         className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-10"
       >
         {[
-          { icon: Zap, label: 'Lightning Fast', desc: 'Instant results, zero latency', color: 'text-warning', bg: 'bg-warning/10', border: 'hover:border-warning/30' },
-          { icon: Shield, label: 'Privacy First', desc: 'Everything runs client-side', color: 'text-success', bg: 'bg-success/10', border: 'hover:border-success/30' },
-          { icon: Clock, label: 'Save Time', desc: 'Automate repetitive tasks', color: 'text-info', bg: 'bg-info/10', border: 'hover:border-info/30' },
-        ].map(({ icon: Icon, label, desc, color, bg, border }, idx) => (
+          { icon: Zap, label: 'Lightning Fast', desc: 'Instant results, zero latency', color: 'text-warning', bg: 'bg-gradient-to-br from-warning/15 to-warning/5', border: 'hover:border-warning/25', shadow: 'hover:shadow-warning/8' },
+          { icon: Shield, label: 'Privacy First', desc: 'Everything runs client-side', color: 'text-success', bg: 'bg-gradient-to-br from-success/15 to-success/5', border: 'hover:border-success/25', shadow: 'hover:shadow-success/8' },
+          { icon: Clock, label: 'Save Time', desc: 'Automate repetitive tasks', color: 'text-info', bg: 'bg-gradient-to-br from-info/15 to-info/5', border: 'hover:border-info/25', shadow: 'hover:shadow-info/8' },
+        ].map(({ icon: Icon, label, desc, color, bg, border, shadow }, idx) => (
           <motion.div
             key={label}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 + idx * 0.08, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className={`rounded-2xl border border-base-300/40 bg-base-100/80 p-4 sm:p-5 flex items-center gap-3.5 transition-all duration-300 group ${border} hover:-translate-y-1 hover:shadow-md cursor-default`}
+            className={`rounded-2xl border border-base-300/30 bg-base-100/80 p-4 sm:p-5 flex items-center gap-3.5 transition-all duration-300 group ${border} hover:-translate-y-1 hover:shadow-lg ${shadow} cursor-default relative overflow-hidden`}
           >
-            <div className={`w-11 h-11 rounded-xl ${bg} flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-300`}>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-base-200/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+            <div className={`w-11 h-11 rounded-xl ${bg} flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-300 relative z-10 ring-1 ring-base-content/[0.04]`}>
               <Icon size={20} className={color} />
             </div>
-            <div>
+            <div className="relative z-10">
               <p className="text-sm font-bold">{label}</p>
-              <p className="text-xs text-base-content/45 mt-0.5">{desc}</p>
+              <p className="text-xs text-base-content/55 mt-0.5">{desc}</p>
             </div>
           </motion.div>
         ))}
@@ -205,7 +206,7 @@ export default function Dashboard() {
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp size={14} className="text-primary opacity-60" />
-            <h2 className="text-xs font-bold uppercase tracking-widest opacity-40">Recently Used</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest opacity-55">Recently Used</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {recentTools.map((tool) => {
@@ -251,7 +252,7 @@ export default function Dashboard() {
                 selectedCategory === cat.id ? 'btn-primary shadow-md shadow-primary/20' : 'btn-ghost border border-base-300/50 hover:border-primary/30'
               }`}
             >
-              <span className="text-xs">{cat.emoji}</span>
+              {cat.icon && (() => { const CatIcon = cat.icon; return <CatIcon size={13} strokeWidth={1.8} />; })()}
               <span className="hidden sm:inline">{cat.label}</span>
               <span className="sm:hidden text-[11px]">{cat.label.split(' ')[0]}</span>
               <span className={`badge badge-xs ${selectedCategory === cat.id ? 'bg-primary-content/20 text-primary-content border-0' : 'badge-ghost'}`}>
@@ -287,9 +288,12 @@ export default function Dashboard() {
                     } catch {}
                   }}
                 >
-                  <div className="h-full rounded-2xl border border-base-300/40 bg-base-100 p-5 transition-all duration-200 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/[0.06] hover:-translate-y-1 relative overflow-hidden">
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-12 h-12 rounded-xl bg-primary/[0.06] flex items-center justify-center shrink-0 text-primary transition-all duration-200 group-hover:bg-primary/[0.12] group-hover:scale-105">
+                  <div className="h-full rounded-2xl border border-base-300/30 bg-base-100 p-5 transition-all duration-300 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/[0.06] hover:-translate-y-1.5 relative overflow-hidden">
+                    {/* Hover corner glow */}
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-primary/[0.03] to-transparent rounded-bl-[80%] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                    <div className="flex items-start gap-3.5 relative z-10">
+                      <div className="w-12 h-12 rounded-xl bg-primary/[0.06] flex items-center justify-center shrink-0 text-primary transition-all duration-300 group-hover:bg-primary/[0.14] group-hover:scale-110 group-hover:rotate-[-3deg] shadow-sm ring-1 ring-primary/[0.05] group-hover:ring-primary/15 group-hover:shadow-md group-hover:shadow-primary/10">
                         <Icon size={22} strokeWidth={1.8} />
                       </div>
                       <div className="flex-1 min-w-0 pt-0.5">
@@ -300,16 +304,17 @@ export default function Dashboard() {
                           <ArrowRight
                             size={14}
                             strokeWidth={2.5}
-                            className="shrink-0 opacity-0 transition-opacity duration-200 group-hover:opacity-50 text-primary"
+                            className="shrink-0 opacity-0 transition-all duration-300 group-hover:opacity-50 group-hover:translate-x-0.5 text-primary"
                           />
                         </div>
-                        <p className="text-xs text-base-content/50 leading-relaxed line-clamp-2">
+                        <p className="text-xs text-base-content/60 leading-relaxed line-clamp-2">
                           {tool.description}
                         </p>
                         {category && (
                           <div className="mt-3 flex items-center gap-2">
-                            <span className="badge badge-ghost badge-xs gap-1 text-base-content/35 font-medium">
-                              {category.emoji} {category.label}
+                            <span className="badge badge-ghost badge-xs gap-1.5 text-base-content/50 font-medium group-hover:bg-primary/[0.06] group-hover:text-primary/60 group-hover:border-primary/10 transition-all duration-300">
+                              {category.icon && (() => { const CatIcon = category.icon; return <CatIcon size={10} strokeWidth={2} className="shrink-0" />; })()}
+                              {category.label}
                             </span>
                           </div>
                         )}
@@ -377,11 +382,11 @@ export default function Dashboard() {
                   <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
                 </svg>
               </p>
-              <p className="text-[10px] opacity-30">@PooranaSelvan</p>
+              <p className="text-[10px] opacity-45">@PooranaSelvan</p>
             </div>
           </a>
 
-          <p className="text-[11px] opacity-20 flex items-center gap-1.5 flex-wrap justify-center">
+          <p className="text-[11px] opacity-35 flex items-center gap-1.5 flex-wrap justify-center">
             Crafted with <Heart size={10} className="text-error" /> by Poorana Selvan
           </p>
         </div>

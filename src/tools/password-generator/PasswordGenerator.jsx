@@ -50,12 +50,13 @@ function calcStrength(password) {
   if (hasSequential) score *= 0.6;
   if (hasCommonPatterns) score *= 0.3;
 
-  if (score < 25) return { score, label: 'Very Weak', color: 'bg-error', textColor: 'text-error', entropy, crackTime: 'Instant', percent: 10 };
-  if (score < 40) return { score, label: 'Weak', color: 'bg-warning', textColor: 'text-warning', entropy, crackTime: 'Minutes', percent: 25 };
-  if (score < 60) return { score, label: 'Fair', color: 'bg-warning', textColor: 'text-warning', entropy, crackTime: 'Hours', percent: 45 };
-  if (score < 80) return { score, label: 'Strong', color: 'bg-info', textColor: 'text-info', entropy, crackTime: 'Years', percent: 70 };
-  if (score < 100) return { score, label: 'Very Strong', color: 'bg-success', textColor: 'text-success', entropy, crackTime: 'Centuries', percent: 85 };
-  return { score, label: 'Unbreakable', color: 'bg-success', textColor: 'text-success', entropy, crackTime: '10,000+ Years', percent: 100 };
+  const crackTime = estimateCrackTime(entropy);
+  if (score < 25) return { score, label: 'Very Weak', color: 'bg-error', textColor: 'text-error', entropy, crackTime, percent: 10 };
+  if (score < 40) return { score, label: 'Weak', color: 'bg-warning', textColor: 'text-warning', entropy, crackTime, percent: 25 };
+  if (score < 60) return { score, label: 'Fair', color: 'bg-warning', textColor: 'text-warning', entropy, crackTime, percent: 45 };
+  if (score < 80) return { score, label: 'Strong', color: 'bg-info', textColor: 'text-info', entropy, crackTime, percent: 70 };
+  if (score < 100) return { score, label: 'Very Strong', color: 'bg-success', textColor: 'text-success', entropy, crackTime, percent: 85 };
+  return { score, label: 'Unbreakable', color: 'bg-success', textColor: 'text-success', entropy, crackTime, percent: 100 };
 }
 
 // ─── Estimate crack time ───
@@ -338,7 +339,7 @@ export default function PasswordGenerator() {
                       className={`h-full rounded-full ${strength.color}`} />
                   </div>
                   <div className="flex items-center justify-between text-[10px] opacity-40">
-                    <span>Crack time: {estimateCrackTime(strength.entropy)}</span>
+                    <span>Crack time: {strength.crackTime}</span>
                     <span>{password.length} characters</span>
                   </div>
                 </motion.div>

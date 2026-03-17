@@ -59,19 +59,20 @@ export default function AppLayout() {
         Skip to main content
       </a>
 
-      {/* Ambient background — static gradient overlay.
-          Previously used 3 animated blobs with will-change: transform and
-          continuous CSS animations, but at 1.5–3.5% opacity the movement
-          is imperceptible while the GPU cost is significant. */}
+      {/* Ambient background — layered gradient overlay for visual depth */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
         <div className="absolute inset-0 bg-gradient-to-br from-base-200 via-base-200 to-base-300/40" />
         <div
-          className="ambient-blob top-[-5%] right-[-5%] w-[min(600px,80vw)] h-[min(600px,80vw)] opacity-[0.035]"
+          className="ambient-blob top-[-8%] right-[-8%] w-[min(650px,85vw)] h-[min(650px,85vw)] opacity-[0.04]"
           style={{ background: 'var(--color-primary)' }}
         />
         <div
-          className="ambient-blob bottom-[-5%] left-[-5%] w-[min(450px,60vw)] h-[min(450px,60vw)] opacity-[0.025]"
+          className="ambient-blob bottom-[-8%] left-[-8%] w-[min(500px,65vw)] h-[min(500px,65vw)] opacity-[0.03]"
           style={{ background: 'var(--color-secondary, var(--color-primary))' }}
+        />
+        <div
+          className="ambient-blob top-[40%] left-[40%] w-[min(300px,40vw)] h-[min(300px,40vw)] opacity-[0.015]"
+          style={{ background: 'var(--color-accent, var(--color-primary))' }}
         />
       </div>
 

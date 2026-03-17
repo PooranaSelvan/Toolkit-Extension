@@ -87,6 +87,43 @@
   --noise: 0;
 }
 
+/* ═══ VS Code Theme Text Visibility Safety ═══
+   When running inside VS Code, theme colors are dynamically generated from
+   --vscode-* CSS variables. Many VS Code themes produce base-content colors
+   that, when combined with Tailwind opacity modifiers (e.g. text-base-content/50),
+   become invisible against the generated backgrounds.
+   
+   These overrides ensure minimum readable contrast for the vscode theme by
+   bumping the opacity floor for text and icons. */
+[data-theme=vscode] {
+  /* Ensure minimum text contrast — override very-low-opacity text utilities */
+  --tw-text-opacity-floor: 0.45;
+}
+
+/* Force sidebar and secondary text to have sufficient contrast in VS Code */
+[data-theme=vscode] .badge-ghost {
+  color: color-mix(in oklch, var(--color-base-content) 70%, transparent);
+  border-color: color-mix(in oklch, var(--color-base-content) 12%, transparent);
+}
+
+/* Ensure form placeholder text is visible in VS Code theme */
+[data-theme=vscode] .input::placeholder,
+[data-theme=vscode] .textarea::placeholder {
+  color: color-mix(in oklch, var(--color-base-content) 50%, transparent);
+}
+
+/* Ensure table header text is readable */
+[data-theme=vscode] .table th {
+  opacity: 0.7;
+}
+
+/* Ensure kbd hints are visible */
+[data-theme=vscode] .kbd-hint {
+  opacity: 0.4;
+  background: color-mix(in oklch, var(--color-base-content) 10%, transparent);
+  border-color: color-mix(in oklch, var(--color-base-content) 12%, transparent);
+}
+
 /* ─── Scrollbar ─── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -197,7 +234,7 @@ body {
 }
 
 .input::placeholder, .textarea::placeholder {
-  color: color-mix(in oklch, var(--color-base-content) 35%, transparent);
+  color: color-mix(in oklch, var(--color-base-content) 45%, transparent);
 }
 .input:focus, .input:focus-within, .select:focus, .select:focus-within, .textarea:focus, .textarea:focus-within {
   outline: none;
@@ -636,22 +673,21 @@ body {
   border-bottom-right-radius: 0.5rem;
 }
 
-/* ═══ Glass & Effects — backdrop-filter removed for performance ═══
-   backdrop-filter creates a separate compositing layer for EACH element
-   and forces the GPU to blur the underlying content on every repaint.
-   Using solid/semi-transparent backgrounds instead. */
+/* ═══ Glass & Effects — refined surfaces ═══ */
 .glass-card {
-  background: color-mix(in oklch, var(--color-base-100) 95%, transparent);
-  border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
+  background: color-mix(in oklch, var(--color-base-100) 96%, transparent);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 7%, transparent);
+  box-shadow: 0 1px 2px color-mix(in oklch, var(--color-base-content) 2%, transparent);
 }
 .glass-highlight {
   box-shadow:
     0 1px 3px color-mix(in oklch, var(--color-base-content) 4%, transparent),
-    0 4px 16px color-mix(in oklch, var(--color-base-content) 2%, transparent);
+    0 4px 16px color-mix(in oklch, var(--color-base-content) 2%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-base-content) 3%, transparent) inset;
 }
 .glass-base {
   background: color-mix(in oklch, var(--color-base-200) 90%, transparent);
-  border: 1px solid color-mix(in oklch, var(--color-base-content) 6%, transparent);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 5%, transparent);
   border-radius: 0.75rem;
 }
 .glass-sidebar {
@@ -660,13 +696,13 @@ body {
 .glass-header {
   background: color-mix(in oklch, var(--color-base-100) 95%, transparent);
 }
-/* Elevated glass variant — no blur */
+/* Elevated glass variant */
 .glass-elevated {
-  background: color-mix(in oklch, var(--color-base-100) 96%, transparent);
-  border: 1px solid color-mix(in oklch, var(--color-base-content) 10%, transparent);
+  background: color-mix(in oklch, var(--color-base-100) 97%, transparent);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
   box-shadow:
-    0 2px 4px color-mix(in oklch, var(--color-base-content) 3%, transparent),
-    0 8px 24px -4px color-mix(in oklch, var(--color-base-content) 6%, transparent);
+    0 1px 3px color-mix(in oklch, var(--color-base-content) 3%, transparent),
+    0 8px 24px -4px color-mix(in oklch, var(--color-base-content) 5%, transparent);
 }
 
 /* ═══ Gradient text ═══ */
@@ -701,18 +737,20 @@ body {
   -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, black 30%, transparent 100%);
 }
 
-/* ═══ Stat card — removed backdrop-filter for performance ═══ */
+/* ═══ Stat card — polished surface ═══ */
 .stat-card-frost {
-  background: color-mix(in oklch, var(--color-base-100) 92%, transparent);
-  border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
+  background: color-mix(in oklch, var(--color-base-100) 94%, transparent);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 7%, transparent);
   box-shadow:
-    0 1px 3px color-mix(in oklch, var(--color-base-content) 3%, transparent);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    0 1px 3px color-mix(in oklch, var(--color-base-content) 2%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-base-content) 2%, transparent) inset;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
 }
 .stat-card-frost:hover {
-  border-color: color-mix(in oklch, var(--color-primary) 20%, transparent);
+  border-color: color-mix(in oklch, var(--color-primary) 18%, transparent);
   box-shadow:
-    0 4px 16px color-mix(in oklch, var(--color-primary) 8%, transparent);
+    0 4px 20px color-mix(in oklch, var(--color-primary) 8%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-primary) 8%, transparent) inset;
 }
 
 /* ═══ Marquee-style category pill track ═══ */
@@ -1055,23 +1093,23 @@ html.sidebar-body-lock {
   height: 1px;
   background-color: color-mix(in oklch, var(--color-base-content) 10%, transparent);
 }
-/* ═══ Section card — removed backdrop-filter for performance ═══ */
+/* ═══ Section card — refined ═══ */
 .section-card {
   @apply rounded-xl border;
   position: relative;
   overflow: hidden;
   background: color-mix(in oklch, var(--color-base-100) 98%, transparent);
-  border-color: color-mix(in oklch, var(--color-base-content) 10%, transparent);
+  border-color: color-mix(in oklch, var(--color-base-content) 8%, transparent);
   box-shadow: 
-    0 1px 2px 0 color-mix(in oklch, var(--color-base-content) 3%, transparent),
+    0 1px 2px 0 color-mix(in oklch, var(--color-base-content) 2%, transparent),
     0 4px 12px -2px color-mix(in oklch, var(--color-base-content) 2%, transparent);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
 }
 .section-card:hover {
   box-shadow: 
-    0 2px 4px 0 color-mix(in oklch, var(--color-base-content) 4%, transparent),
-    0 10px 24px -4px color-mix(in oklch, var(--color-base-content) 5%, transparent);
-  border-color: color-mix(in oklch, var(--color-primary) 18%, transparent);
+    0 2px 4px 0 color-mix(in oklch, var(--color-base-content) 3%, transparent),
+    0 12px 28px -4px color-mix(in oklch, var(--color-base-content) 5%, transparent);
+  border-color: color-mix(in oklch, var(--color-primary) 15%, transparent);
 }
 /* Allow opt-out: when a section-card explicitly needs visible overflow (e.g. shadow previews) */
 .section-card.overflow-visible {
@@ -1437,12 +1475,12 @@ main::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--colo
   background: linear-gradient(
     90deg,
     transparent 0%,
-    color-mix(in oklch, var(--color-primary) 25%, transparent) 30%,
-    color-mix(in oklch, var(--color-secondary, var(--color-primary)) 20%, transparent) 70%,
+    color-mix(in oklch, var(--color-primary) 30%, transparent) 25%,
+    color-mix(in oklch, var(--color-secondary, var(--color-primary)) 25%, transparent) 50%,
+    color-mix(in oklch, var(--color-primary) 20%, transparent) 75%,
     transparent 100%
   );
-  /* Removed infinite gradient-shift animation — a 1px line animating
-     continuously consumes GPU compositing resources for negligible visual impact */
+  opacity: 0.8;
 }
 
 /* ═══ Sidebar active indicator animation ═══ */
@@ -1753,6 +1791,67 @@ main p, main li, main span, main td, main th {
 }
 .animate-pulse-soft {
   animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* ═══ Enhanced card hover border glow ═══ */
+.card-border-glow {
+  position: relative;
+}
+.card-border-glow::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  opacity: 0;
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--color-primary) 15%, transparent),
+    color-mix(in oklch, var(--color-secondary, var(--color-primary)) 10%, transparent)
+  );
+  z-index: -1;
+  transition: opacity 0.4s ease;
+  filter: blur(6px);
+}
+.card-border-glow:hover::after {
+  opacity: 1;
+}
+
+/* ═══ Enhanced scrollbar for nav ═══ */
+nav.scrollbar-thin::-webkit-scrollbar { width: 3px; }
+nav.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--color-base-content) 10%, transparent);
+  border-radius: 999px;
+}
+nav.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklch, var(--color-primary) 20%, transparent);
+}
+
+/* ═══ Subtle inner glow for icon containers ═══ */
+.icon-inner-glow {
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--color-primary) 8%, transparent) inset,
+    0 1px 2px color-mix(in oklch, var(--color-primary) 5%, transparent);
+}
+
+/* ═══ Enhanced gradient-line ═══ */
+.gradient-line-strong {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklch, var(--color-primary) 30%, transparent) 30%,
+    color-mix(in oklch, var(--color-secondary, var(--color-primary)) 25%, transparent) 70%,
+    transparent 100%
+  );
+}
+
+/* ═══ Frosted surface for elevated panels ═══ */
+.frosted-surface {
+  background: color-mix(in oklch, var(--color-base-100) 92%, transparent);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 6%, transparent);
+  box-shadow:
+    0 1px 3px color-mix(in oklch, var(--color-base-content) 3%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-base-content) 2%, transparent) inset;
 }
 
 

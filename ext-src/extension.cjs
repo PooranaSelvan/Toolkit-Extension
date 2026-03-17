@@ -333,7 +333,7 @@ function getWebviewContent(webview, extensionUri, initialRoute = '/') {
     font-src ${webview.cspSource} https://fonts.gstatic.com;
     img-src ${webview.cspSource} https: data: blob:;
     script-src 'nonce-${nonce}' ${webview.cspSource};
-    connect-src ${webview.cspSource} https: http: ws: wss: data: blob:;
+    connect-src ${webview.cspSource} https: http:;
     frame-src blob: data:;
     worker-src blob:;
   `.replace(/\s+/g, ' ').trim();

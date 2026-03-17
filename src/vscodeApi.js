@@ -50,7 +50,12 @@ export function postMessage(message) {
  */
 export async function copyToClipboard(text) {
   if (isVsCodeWebview()) {
-    postMessage({ type: 'copyToClipboard', text });
+    // In VS Code webview, delegate to extension host for clipboard access.
+    // Return a Promise that resolves based on the postMessage success.
+    const sent = postMessage({ type: 'copyToClipboard', text });
+    // If postMessage itself failed (no API available), return false
+    if (!sent) return false;
+    // We trust the extension host will handle it; no round-trip confirmation available
     return true;
   }
   

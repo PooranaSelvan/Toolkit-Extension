@@ -1,10 +1,10 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   GraduationCap, Play, Pause, RotateCcw, Shuffle,
   BarChart3, ChevronRight, Zap, ArrowUpDown,
   BookOpen, SkipForward, SkipBack, Volume2, VolumeX, Info, Gauge,
-  Footprints, FastForward,
+  Footprints, FastForward, Trophy, Timer, Sparkles,
 } from 'lucide-react';
 import SEO from '../../components/SEO';
 
@@ -13,6 +13,8 @@ const ALGORITHMS = {
   selection: {
     name: 'Selection Sort',
     icon: '🔍',
+    color: '#8b5cf6',
+    gradient: 'linear-gradient(135deg, #8b5cf6, #a78bfa)',
     complexity: { best: 'O(n²)', avg: 'O(n²)', worst: 'O(n²)', space: 'O(1)' },
     stable: false,
     desc: 'Repeatedly finds the minimum element from the unsorted region and moves it to the beginning.',
@@ -38,6 +40,8 @@ const ALGORITHMS = {
   bubble: {
     name: 'Bubble Sort',
     icon: '🫧',
+    color: '#06b6d4',
+    gradient: 'linear-gradient(135deg, #06b6d4, #67e8f9)',
     complexity: { best: 'O(n)', avg: 'O(n²)', worst: 'O(n²)', space: 'O(1)' },
     stable: true,
     desc: 'Repeatedly steps through the list, compares adjacent elements, and swaps them if they are in the wrong order.',
@@ -63,6 +67,8 @@ const ALGORITHMS = {
   insertion: {
     name: 'Insertion Sort',
     icon: '📥',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
     complexity: { best: 'O(n)', avg: 'O(n²)', worst: 'O(n²)', space: 'O(1)' },
     stable: true,
     desc: 'Builds the sorted array one item at a time by inserting each element into its correct position — like sorting cards in your hand.',
@@ -90,6 +96,8 @@ const ALGORITHMS = {
   merge: {
     name: 'Merge Sort',
     icon: '🔀',
+    color: '#ec4899',
+    gradient: 'linear-gradient(135deg, #ec4899, #f472b6)',
     complexity: { best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n log n)', space: 'O(n)' },
     stable: true,
     desc: 'A divide-and-conquer algorithm that divides the array in halves, recursively sorts them, and merges the sorted halves.',
@@ -225,7 +233,7 @@ const GENERATORS = { selection: selectionSortSteps, bubble: bubbleSortSteps, ins
 const audioCtxRef = { current: null };
 function playTone(value, max = 100) {
   try {
-    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || /** @type {typeof AudioContext} */ (window).webkitAudioContext)();
+    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
     const ctx = audioCtxRef.current;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -238,26 +246,26 @@ function playTone(value, max = 100) {
   } catch { /* silent */ }
 }
 
-// ── Bar color resolver ───────────────────────────────────────────────
+// ── Bar color resolver (gradient-aware) ──────────────────────────────
 const C = {
-  default:   'var(--color-primary)',
-  comparing: '#3b82f6',
-  swapping:  '#ef4444',
-  inserted:  '#f59e0b',
-  placed:    '#8b5cf6',
-  merging:   '#818cf8',
-  sorted:    '#22c55e',
+  default:   { solid: 'var(--color-primary)', from: 'var(--color-primary)', to: 'color-mix(in oklch, var(--color-primary) 70%, var(--color-secondary))' },
+  comparing: { solid: '#3b82f6', from: '#3b82f6', to: '#60a5fa' },
+  swapping:  { solid: '#ef4444', from: '#ef4444', to: '#f87171' },
+  inserted:  { solid: '#f59e0b', from: '#f59e0b', to: '#fbbf24' },
+  placed:    { solid: '#8b5cf6', from: '#8b5cf6', to: '#a78bfa' },
+  merging:   { solid: '#818cf8', from: '#818cf8', to: '#a5b4fc' },
+  sorted:    { solid: '#22c55e', from: '#22c55e', to: '#4ade80' },
 };
 
-function barColor(idx, step) {
-  if (!step) return C.default;
-  if (step.sorted?.includes(idx))   return C.sorted;
-  if (step.swapping?.includes(idx)) return C.swapping;
-  if (step.inserted === idx)        return C.inserted;
-  if (step.placed === idx)          return C.placed;
-  if (step.comparing?.includes(idx))return C.comparing;
-  if (step.merging?.includes(idx))  return C.merging;
-  return C.default;
+function barState(idx, step) {
+  if (!step) return 'default';
+  if (step.sorted?.includes(idx))   return 'sorted';
+  if (step.swapping?.includes(idx)) return 'swapping';
+  if (step.inserted === idx)        return 'inserted';
+  if (step.placed === idx)          return 'placed';
+  if (step.comparing?.includes(idx))return 'comparing';
+  if (step.merging?.includes(idx))  return 'merging';
+  return 'default';
 }
 
 function barIsActive(idx, step) {
@@ -268,14 +276,120 @@ function barIsActive(idx, step) {
 // ── Phase badge color ────────────────────────────────────────────────
 function phaseBadgeBg(phase) {
   if (!phase) return undefined;
-  if (phase === 'Done') return C.sorted;
-  if (phase.includes('Swap') || phase.includes('Shift')) return C.swapping;
-  if (phase.includes('Compar')) return C.comparing;
-  if (phase.includes('Merg') || phase.includes('Divid')) return C.merging;
-  if (phase.includes('Insert') || phase.includes('Pick') || phase.includes('key')) return C.inserted;
-  if (phase.includes('Plac') || phase.includes('Start') || phase.includes('Scan')) return C.placed;
+  if (phase === 'Done') return C.sorted.solid;
+  if (phase.includes('Swap') || phase.includes('Shift')) return C.swapping.solid;
+  if (phase.includes('Compar')) return C.comparing.solid;
+  if (phase.includes('Merg') || phase.includes('Divid')) return C.merging.solid;
+  if (phase.includes('Insert') || phase.includes('Pick') || phase.includes('key')) return C.inserted.solid;
+  if (phase.includes('Plac') || phase.includes('Start') || phase.includes('Scan')) return C.placed.solid;
   return undefined;
 }
+
+// ── CSS for bar animations (injected once) ───────────────────────────
+const STYLE_ID = 'sorting-vis-styles';
+if (typeof document !== 'undefined' && !document.getElementById(STYLE_ID)) {
+  const style = document.createElement('style');
+  style.id = STYLE_ID;
+  style.textContent = `
+    @keyframes sv-bar-pulse { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.25)} }
+    @keyframes sv-bar-swap { 0%{transform:scaleY(1)} 30%{transform:scaleY(1.12) scaleX(0.92)} 70%{transform:scaleY(1.04)} 100%{transform:scaleY(1)} }
+    @keyframes sv-confetti-pop { 0%{transform:scale(0) rotate(0deg);opacity:1} 50%{transform:scale(1.2) rotate(180deg);opacity:0.8} 100%{transform:scale(0.8) rotate(360deg);opacity:0} }
+    @keyframes sv-celebration-bar { 0%{filter:brightness(1)} 50%{filter:brightness(1.3)} 100%{filter:brightness(1)} }
+    @keyframes sv-glow-ring { 0%{box-shadow:0 0 0 0 var(--ring-color)} 70%{box-shadow:0 0 0 6px transparent} 100%{box-shadow:0 0 0 0 transparent} }
+    @keyframes sv-slide-up { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes sv-number-pop { 0%{transform:scale(1)} 50%{transform:scale(1.15)} 100%{transform:scale(1)} }
+    .sv-bar { transform-origin: bottom center; will-change: height; }
+    .sv-bar-active { animation: sv-bar-pulse 0.6s ease-in-out; }
+    .sv-bar-swap { animation: sv-bar-swap 0.25s ease-out; }
+    .sv-celebration-bar { animation: sv-celebration-bar 0.6s ease-in-out; animation-delay: var(--d, 0ms); }
+    .sv-confetti { animation: sv-confetti-pop 0.8s ease-out forwards; animation-delay: var(--d, 0ms); }
+    .sv-glow-ring { animation: sv-glow-ring 0.8s ease-out; --ring-color: var(--color-primary); }
+    .sv-slide-up { animation: sv-slide-up 0.3s ease-out both; animation-delay: var(--d, 0ms); }
+    .sv-number-pop { animation: sv-number-pop 0.2s ease-out; }
+    .sv-grid-bg {
+      background-image: radial-gradient(circle, color-mix(in oklch, var(--color-base-content) 6%, transparent) 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+    .sv-vis-area {
+      background: linear-gradient(180deg,
+        color-mix(in oklch, var(--color-base-200) 40%, transparent) 0%,
+        color-mix(in oklch, var(--color-base-200) 70%, transparent) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .sv-vis-area::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, color-mix(in oklch, var(--color-base-content) 4%, transparent) 1px, transparent 1px);
+      background-size: 20px 20px;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// ── Memoized bar component for perf ──────────────────────────────────
+const Bar = memo(function Bar({ val, maxVal, state, active, isSwap, isSorted, isCelebrating, arraySize, index }) {
+  const colors = C[state] || C.default;
+  const pct = Math.max(4, (val / maxVal) * 100);
+  const barWidth = arraySize < 15 ? 44 : arraySize < 30 ? 26 : 16;
+  const showNum = arraySize <= 25;
+
+  return (
+    <div
+      className={`sv-bar ${isSwap ? 'sv-bar-swap' : active ? 'sv-bar-active' : ''} ${isCelebrating ? 'sv-celebration-bar' : ''}`}
+      style={{
+        '--d': isCelebrating ? `${index * 30}ms` : '0ms',
+        flex: '1 1 0',
+        maxWidth: barWidth,
+        minWidth: 2,
+        height: `${pct}%`,
+        background: `linear-gradient(to top, ${colors.from}, ${colors.to})`,
+        borderRadius: arraySize > 30 ? '3px 3px 0 0' : '6px 6px 0 0',
+        boxShadow: active
+          ? `0 0 16px ${colors.solid}55, 0 0 4px ${colors.solid}33, inset 0 1px 0 rgba(255,255,255,0.2)`
+          : isSorted
+            ? `0 0 8px ${colors.solid}33, inset 0 1px 0 rgba(255,255,255,0.15)`
+            : `inset 0 1px 0 rgba(255,255,255,0.1)`,
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        opacity: isSorted || active ? 1 : 0.8,
+        position: 'relative',
+        contain: 'layout style',
+      }}
+    >
+      {/* Top highlight */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: '30%',
+        background: 'linear-gradient(to bottom, rgba(255,255,255,0.15), transparent)',
+        borderRadius: 'inherit',
+        pointerEvents: 'none',
+      }} />
+      {showNum && (
+        <span
+          className={active ? 'sv-number-pop' : ''}
+          style={{
+            fontSize: arraySize <= 12 ? 10 : 8,
+            fontWeight: 700,
+            color: '#fff',
+            textShadow: '0 1px 3px rgba(0,0,0,0.6)',
+            marginTop: 4,
+            fontFamily: "'JetBrains Mono', monospace",
+            lineHeight: 1,
+            userSelect: 'none',
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          {val}
+        </span>
+      )}
+    </div>
+  );
+});
 
 // ══════════════════════════════════════════════════════════════════════
 //  MAIN COMPONENT
@@ -294,11 +408,18 @@ export default function SortingVisualizer() {
   const [sound, setSound]         = useState(false);
   const [tab, setTab]             = useState('visualize');
   const [showPseudo, setShowPseudo] = useState(false);
-  const [mode, setMode]           = useState('auto'); // 'auto' or 'step'
+  const [mode, setMode]           = useState('auto');
+  const [celebrating, setCelebrating] = useState(false);
+  const [swapCount, setSwapCount] = useState(0);
+  const [compareCount, setCompareCount] = useState(0);
+  const [elapsed, setElapsed]     = useState(0);
 
   const timerRef = useRef(null);
   const stepsRef = useRef([]);
   const idxRef   = useRef(0);
+  const rafRef   = useRef(null);
+  const startTimeRef = useRef(null);
+  const elapsedTimerRef = useRef(null);
 
   const maxVal = useMemo(() => Math.max(...array, 100), [array]);
   const info   = ALGORITHMS[algo];
@@ -314,7 +435,11 @@ export default function SortingVisualizer() {
   // ── Reset ──────────────────────────────────────────────────────────
   const reset = useCallback(() => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    if (elapsedTimerRef.current) { clearInterval(elapsedTimerRef.current); elapsedTimerRef.current = null; }
     setPlaying(false); setSorted(false); setStep(null); setStepNo(0); setTotal(0);
+    setCelebrating(false); setSwapCount(0); setCompareCount(0); setElapsed(0);
+    startTimeRef.current = null;
     idxRef.current = 0; stepsRef.current = [];
   }, []);
 
@@ -322,20 +447,28 @@ export default function SortingVisualizer() {
     reset(); setArray(generateArray(arraySize, arrayType));
   }, [arraySize, arrayType, reset]);
 
-  // ── Tick ───────────────────────────────────────────────────────────
+  // ── Tick (using requestAnimationFrame for high speed, setInterval otherwise) ──
   const tick = useCallback(() => {
     if (idxRef.current >= stepsRef.current.length) {
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-      setPlaying(false); setSorted(true); return;
+      if (elapsedTimerRef.current) { clearInterval(elapsedTimerRef.current); elapsedTimerRef.current = null; }
+      setPlaying(false); setSorted(true);
+      setCelebrating(true);
+      setTimeout(() => setCelebrating(false), 1500);
+      return;
     }
     const s = stepsRef.current[idxRef.current];
     setStep(s); setArray(s.array); setStepNo(idxRef.current + 1);
+    // Track stats
+    if (s.swapping) setSwapCount(c => c + 1);
+    if (s.comparing) setCompareCount(c => c + 1);
     idxRef.current++;
   }, []);
 
   const startTimer = useCallback((spd) => {
     if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(tick, Math.max(8, 500 - spd * 4.9));
+    const delay = Math.max(8, 500 - spd * 4.9);
+    timerRef.current = setInterval(tick, delay);
   }, [tick]);
 
   // ── Play / Pause ───────────────────────────────────────────────────
@@ -343,14 +476,22 @@ export default function SortingVisualizer() {
     if (sorted) return;
     if (playing) {
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      if (elapsedTimerRef.current) { clearInterval(elapsedTimerRef.current); elapsedTimerRef.current = null; }
       setPlaying(false); return;
     }
     if (!stepsRef.current.length || idxRef.current === 0) {
       const s = buildSteps(array, algo);
       stepsRef.current = s; idxRef.current = 0; setTotal(s.length); setStepNo(0);
+      setSwapCount(0); setCompareCount(0); setElapsed(0);
+      startTimeRef.current = Date.now();
     }
+    if (!startTimeRef.current) startTimeRef.current = Date.now() - elapsed * 1000;
+    // Start elapsed timer
+    elapsedTimerRef.current = setInterval(() => {
+      if (startTimeRef.current) setElapsed(((Date.now() - startTimeRef.current) / 1000));
+    }, 100);
     setPlaying(true); startTimer(speed);
-  }, [playing, sorted, buildSteps, array, algo, speed, startTimer]);
+  }, [playing, sorted, buildSteps, array, algo, speed, startTimer, elapsed]);
 
   // ── Step controls ──────────────────────────────────────────────────
   const forward = useCallback(() => {
@@ -359,12 +500,21 @@ export default function SortingVisualizer() {
       const s = buildSteps(array, algo);
       stepsRef.current = s; idxRef.current = 0; setTotal(s.length);
     }
-    if (idxRef.current >= stepsRef.current.length) { setSorted(true); return; }
+    if (idxRef.current >= stepsRef.current.length) {
+      setSorted(true); setCelebrating(true);
+      setTimeout(() => setCelebrating(false), 1500);
+      return;
+    }
     const s = stepsRef.current[idxRef.current];
     setStep(s); setArray(s.array); setStepNo(idxRef.current + 1);
+    if (s.swapping) setSwapCount(c => c + 1);
+    if (s.comparing) setCompareCount(c => c + 1);
     if (sound && s.comparing) playTone(s.array[s.comparing[0]], maxVal);
     idxRef.current++;
-    if (idxRef.current >= stepsRef.current.length) setSorted(true);
+    if (idxRef.current >= stepsRef.current.length) {
+      setSorted(true); setCelebrating(true);
+      setTimeout(() => setCelebrating(false), 1500);
+    }
   }, [sorted, buildSteps, array, algo, sound, maxVal]);
 
   const backward = useCallback(() => {
@@ -373,21 +523,25 @@ export default function SortingVisualizer() {
     const targetIdx = idxRef.current - 1;
     const s = stepsRef.current[targetIdx];
     setStep(s); setArray(s.array); setStepNo(targetIdx + 1);
-    setSorted(false);
+    setSorted(false); setCelebrating(false);
   }, []);
 
   // ── Effects ────────────────────────────────────────────────────────
   useEffect(() => { if (sound && playing && step?.comparing) playTone(step.array[step.comparing[0]], maxVal); }, [step, sound, playing, maxVal]);
-  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
+  useEffect(() => () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+  }, []);
   useEffect(() => { reset(); }, [algo, reset]);
   useEffect(() => { reset(); setArray(generateArray(arraySize, arrayType)); }, [arraySize, arrayType, reset]);
   useEffect(() => { if (playing) startTimer(speed); }, [speed, playing, startTimer]);
 
   // ── Legend ─────────────────────────────────────────────────────────
   const legend = [
-    { c: C.default, l: 'Default' }, { c: C.comparing, l: 'Comparing' },
-    { c: C.swapping, l: 'Swapping' }, { c: C.inserted, l: 'Inserting' },
-    { c: C.merging, l: 'Merging' }, { c: C.sorted, l: 'Sorted' },
+    { c: C.default.solid, l: 'Default' }, { c: C.comparing.solid, l: 'Comparing' },
+    { c: C.swapping.solid, l: 'Swapping' }, { c: C.inserted.solid, l: 'Inserting' },
+    { c: C.merging.solid, l: 'Merging' }, { c: C.sorted.solid, l: 'Sorted' },
   ];
 
   const TABS = [
@@ -398,6 +552,9 @@ export default function SortingVisualizer() {
 
   const cxColors = { best: '#22c55e', avg: '#f59e0b', worst: '#ef4444', space: '#3b82f6' };
 
+  // ── Progress percentage ────────────────────────────────────────────
+  const progressPct = total > 0 ? (stepNo / total) * 100 : 0;
+
   // ══════════════════════════════════════════════════════════════════
   return (
     <>
@@ -407,7 +564,7 @@ export default function SortingVisualizer() {
         keywords="sorting, algorithm, visualization, learning"
       />
 
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-5">
 
         {/* ── Header ──────────────────────────────────────────────── */}
         <motion.div
@@ -417,11 +574,15 @@ export default function SortingVisualizer() {
           className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
         >
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white"
+              style={{ background: info.gradient }}>
               <GraduationCap size={22} />
             </div>
             <div>
-              <h1 className="text-xl font-bold">Sorting Visualizer</h1>
+              <h1 className="text-xl font-bold flex items-center gap-2">
+                Sorting Visualizer
+                <Sparkles size={16} className="text-primary opacity-50" />
+              </h1>
               <p className="text-xs opacity-50 mt-0.5">Learn sorting algorithms with step-by-step visual animations</p>
             </div>
           </div>
@@ -445,33 +606,54 @@ export default function SortingVisualizer() {
           transition={{ delay: 0.05 }}
           className="grid grid-cols-2 sm:grid-cols-4 gap-3"
         >
-          {Object.entries(ALGORITHMS).map(([key, a]) => (
-            <button
-              key={key}
-              onClick={() => !playing && setAlgo(key)}
-              disabled={playing}
-              className={`section-card p-4 text-left transition-all duration-200 ${
-                playing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-              } ${algo === key ? 'border-primary/40 shadow-sm' : ''}`}
-            >
-              <div className="flex items-center gap-2.5 mb-2">
-                <span className="text-lg">{a.icon}</span>
-                <span className={`text-[13px] font-bold ${algo === key ? 'text-primary' : ''}`}>{a.name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono opacity-40">Avg: {a.complexity.avg}</span>
-                <span
-                  className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
-                  style={{
-                    backgroundColor: a.stable ? '#dcfce7' : '#fef3c7',
-                    color: a.stable ? '#16a34a' : '#d97706',
-                  }}
-                >
-                  {a.stable ? 'Stable' : 'Unstable'}
-                </span>
-              </div>
-            </button>
-          ))}
+          {Object.entries(ALGORITHMS).map(([key, a]) => {
+            const selected = algo === key;
+            return (
+              <button
+                key={key}
+                onClick={() => !playing && setAlgo(key)}
+                disabled={playing}
+                className={`relative section-card p-4 text-left transition-all duration-300 group ${
+                  playing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                } ${selected ? 'shadow-md' : ''}`}
+                style={{
+                  borderColor: selected ? `${a.color}50` : undefined,
+                }}
+              >
+                {/* Active indicator line */}
+                {selected && (
+                  <div className="absolute top-0 left-3 right-3 h-[3px] rounded-b-full"
+                    style={{ background: a.gradient }} />
+                )}
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0 transition-transform duration-300 group-hover:scale-110"
+                    style={{
+                      background: selected
+                        ? `linear-gradient(135deg, ${a.color}20, ${a.color}08)`
+                        : 'color-mix(in oklch, var(--color-base-content) 5%, transparent)',
+                    }}>
+                    {a.icon}
+                  </div>
+                  <span className={`text-[13px] font-bold transition-colors duration-200 ${selected ? '' : ''}`}
+                    style={{ color: selected ? a.color : undefined }}>
+                    {a.name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono opacity-40">Avg: {a.complexity.avg}</span>
+                  <span
+                    className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                    style={{
+                      backgroundColor: a.stable ? '#dcfce7' : '#fef3c7',
+                      color: a.stable ? '#16a34a' : '#d97706',
+                    }}
+                  >
+                    {a.stable ? 'Stable' : 'Unstable'}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </motion.div>
 
         {/* ── Controls ────────────────────────────────────────────── */}
@@ -563,12 +745,12 @@ export default function SortingVisualizer() {
                   <>
                     {sorted ? (
                       <button className="btn btn-sm gap-1.5 min-w-[120px] pointer-events-none"
-                        style={{ backgroundColor: '#22c55e', color: '#fff', borderColor: '#22c55e' }}>
-                        ✓ Sorted!
+                        style={{ background: 'linear-gradient(135deg, #22c55e, #4ade80)', color: '#fff', borderColor: '#22c55e', boxShadow: '0 2px 12px #22c55e44' }}>
+                        <Trophy size={14} /> Sorted!
                       </button>
                     ) : playing ? (
                       <button onClick={togglePlay} className="btn btn-sm gap-1.5 min-w-[120px]"
-                        style={{ backgroundColor: '#f59e0b', color: '#fff', borderColor: '#f59e0b' }}>
+                        style={{ background: 'linear-gradient(135deg, #f59e0b, #fbbf24)', color: '#fff', borderColor: '#f59e0b' }}>
                         <Pause size={14} /> Pause
                       </button>
                     ) : (
@@ -613,7 +795,7 @@ export default function SortingVisualizer() {
                 {total > 0 && <span className="font-mono opacity-40">Step {stepNo}/{total}</span>}
                 {step && (
                   <span className="badge badge-sm text-white"
-                    style={{ backgroundColor: phaseBadgeBg(step.phase) }}>
+                    style={{ backgroundColor: phaseBadgeBg(step.phase), boxShadow: `0 0 8px ${phaseBadgeBg(step.phase)}44` }}>
                     {step.phase}
                   </span>
                 )}
@@ -623,17 +805,48 @@ export default function SortingVisualizer() {
 
           {/* Progress */}
           {total > 0 && (
-            <div className="w-full h-1.5 rounded-full bg-base-200 overflow-hidden">
-              <motion.div
-                className="h-full rounded-full"
-                style={{ backgroundColor: sorted ? '#22c55e' : 'var(--color-primary)' }}
-                initial={false}
-                animate={{ width: `${(stepNo / total) * 100}%` }}
-                transition={{ duration: 0.1, ease: 'easeOut' }}
+            <div className="w-full h-2 rounded-full overflow-hidden"
+              style={{ background: 'color-mix(in oklch, var(--color-base-content) 8%, transparent)' }}>
+              <div
+                className="h-full rounded-full transition-all duration-150 ease-out"
+                style={{
+                  width: `${progressPct}%`,
+                  background: sorted
+                    ? 'linear-gradient(90deg, #22c55e, #4ade80)'
+                    : `linear-gradient(90deg, var(--color-primary), var(--color-secondary))`,
+                  boxShadow: sorted ? '0 0 8px #22c55e55' : '0 0 6px color-mix(in oklch, var(--color-primary) 30%, transparent)',
+                }}
               />
             </div>
           )}
         </motion.div>
+
+        {/* ── Live Stats ──────────────────────────────────────────── */}
+        {(stepNo > 0 || sorted) && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-3 gap-3"
+          >
+            {[
+              { icon: ArrowUpDown, label: 'Comparisons', value: compareCount, color: '#3b82f6' },
+              { icon: Shuffle, label: 'Swaps', value: swapCount, color: '#ef4444' },
+              { icon: Timer, label: 'Time', value: elapsed.toFixed(1) + 's', color: '#8b5cf6' },
+            ].map(({ icon: Icon, label, value, color }, i) => (
+              <div key={label} className="section-card p-3 flex items-center gap-3 sv-slide-up"
+                style={{ '--d': `${i * 50}ms` }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: `${color}15` }}>
+                  <Icon size={14} style={{ color }} />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-medium opacity-40 uppercase tracking-wider">{label}</div>
+                  <div className="text-sm font-bold font-mono" style={{ color }}>{value}</div>
+                </div>
+              </div>
+            ))}
+          </motion.div>
+        )}
 
         {/* ── Tabs ────────────────────────────────────────────────── */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
@@ -659,7 +872,7 @@ export default function SortingVisualizer() {
               <div className="section-card overflow-hidden">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-5 pt-4 pb-2">
                   <div className="flex items-center gap-2">
-                    <BarChart3 size={14} className="text-primary" />
+                    <BarChart3 size={14} style={{ color: info.color }} />
                     <span className="text-xs font-bold">{info.name}</span>
                     {!step && !sorted && (
                       <span className="text-[10px] opacity-30 ml-1">— Press Start or Step Forward</span>
@@ -676,66 +889,56 @@ export default function SortingVisualizer() {
                 </div>
 
                 <div className="px-5 pb-5">
-                  <div
-                    className="rounded-xl overflow-hidden border border-base-300/40"
-                    style={{
-                      background: 'color-mix(in oklch, var(--color-base-200) 60%, transparent)',
-                      padding: '20px 12px 8px',
-                    }}
-                  >
+                  <div className="sv-vis-area rounded-xl border border-base-300/40"
+                    style={{ padding: '24px 16px 12px' }}>
+                    {/* Celebration confetti overlay */}
+                    {celebrating && (
+                      <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+                        {Array.from({ length: 20 }).map((_, i) => (
+                          <div key={i} className="sv-confetti absolute"
+                            style={{
+                              '--d': `${i * 60}ms`,
+                              left: `${5 + Math.random() * 90}%`,
+                              top: `${10 + Math.random() * 40}%`,
+                              width: 8 + Math.random() * 6,
+                              height: 8 + Math.random() * 6,
+                              borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+                              background: ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'][i % 6],
+                            }} />
+                        ))}
+                      </div>
+                    )}
                     <div
                       style={{
                         display: 'flex',
                         alignItems: 'flex-end',
                         justifyContent: 'center',
                         height: arraySize > 40 ? 220 : arraySize > 25 ? 260 : 300,
-                        gap: arraySize > 50 ? 1 : arraySize > 30 ? 2 : 3,
+                        gap: arraySize > 50 ? 1 : arraySize > 30 ? 2 : arraySize > 15 ? 3 : 4,
                         width: '100%',
+                        position: 'relative',
+                        zIndex: 1,
                       }}
                     >
                       {array.map((val, i) => {
-                        const color  = barColor(i, step);
-                        const pct    = Math.max(4, (val / maxVal) * 100);
+                        const state  = barState(i, step);
                         const active = barIsActive(i, step);
                         const isSwap = step?.swapping?.includes(i);
-                        const isSorted = step?.sorted?.includes(i);
+                        const isSorted = step?.sorted?.includes(i) || false;
 
                         return (
-                          <div
+                          <Bar
                             key={i}
-                            style={{
-                              flex: '1 1 0',
-                              maxWidth: arraySize < 15 ? 44 : arraySize < 30 ? 26 : 16,
-                              minWidth: 2,
-                              height: `${pct}%`,
-                              backgroundColor: color,
-                              borderRadius: '4px 4px 0 0',
-                              transition: 'height 0.12s ease-out, background-color 0.12s ease, transform 0.12s ease, box-shadow 0.12s ease',
-                              transform: isSwap ? 'scaleY(1.06)' : active ? 'scaleY(1.03)' : 'scaleY(1)',
-                              boxShadow: active ? `0 0 12px ${color}44` : 'none',
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              justifyContent: 'center',
-                              opacity: isSorted ? 1 : 0.85,
-                            }}
-                          >
-                            {arraySize <= 25 && (
-                              <span
-                                style={{
-                                  fontSize: arraySize <= 12 ? 10 : 8,
-                                  fontWeight: 700,
-                                  color: '#fff',
-                                  textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-                                  marginTop: 3,
-                                  fontFamily: "'JetBrains Mono', monospace",
-                                  lineHeight: 1,
-                                  userSelect: 'none',
-                                }}
-                              >
-                                {val}
-                              </span>
-                            )}
-                          </div>
+                            index={i}
+                            val={val}
+                            maxVal={maxVal}
+                            state={state}
+                            active={active}
+                            isSwap={isSwap}
+                            isSorted={isSorted}
+                            isCelebrating={celebrating}
+                            arraySize={arraySize}
+                          />
                         );
                       })}
                     </div>
@@ -756,8 +959,9 @@ export default function SortingVisualizer() {
                       <div
                         className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-sm"
                         style={{
-                          backgroundColor: phaseBadgeBg(step.phase) || 'var(--color-primary)',
+                          background: `linear-gradient(135deg, ${phaseBadgeBg(step.phase) || 'var(--color-primary)'}, ${phaseBadgeBg(step.phase) || 'var(--color-primary)'}cc)`,
                           color: '#fff',
+                          boxShadow: `0 2px 8px ${phaseBadgeBg(step.phase) || 'var(--color-primary)'}33`,
                         }}
                       >
                         {info.icon}
@@ -765,7 +969,7 @@ export default function SortingVisualizer() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                           <span className="badge badge-sm text-white"
-                            style={{ backgroundColor: phaseBadgeBg(step.phase) }}>
+                            style={{ backgroundColor: phaseBadgeBg(step.phase), boxShadow: `0 0 6px ${phaseBadgeBg(step.phase)}33` }}>
                             {step.phase}
                           </span>
                           <span className="text-[10px] opacity-30 font-mono">Step {stepNo}</span>
@@ -783,17 +987,19 @@ export default function SortingVisualizer() {
                   <h4 className="text-[11px] font-bold opacity-40 mb-2.5 uppercase tracking-wider">Array State</h4>
                   <div className="flex flex-wrap gap-1.5">
                     {array.map((val, i) => {
-                      const color = barColor(i, step);
+                      const state = barState(i, step);
+                      const colors = C[state] || C.default;
                       const lit = barIsActive(i, step) || step?.sorted?.includes(i);
                       return (
                         <span
                           key={i}
-                          className="inline-flex items-center justify-center font-mono text-[10px] font-bold rounded-md transition-all duration-100"
+                          className={`inline-flex items-center justify-center font-mono text-[10px] font-bold rounded-md transition-all duration-150 ${lit ? 'sv-number-pop' : ''}`}
                           style={{
                             minWidth: 28, height: 26, padding: '0 6px',
                             color: lit ? '#fff' : undefined,
-                            backgroundColor: lit ? color : 'transparent',
-                            border: `1.5px solid ${lit ? color : 'color-mix(in oklch, var(--color-base-content) 15%, transparent)'}`,
+                            background: lit ? `linear-gradient(135deg, ${colors.from}, ${colors.to})` : 'transparent',
+                            border: `1.5px solid ${lit ? colors.solid : 'color-mix(in oklch, var(--color-base-content) 15%, transparent)'}`,
+                            boxShadow: lit ? `0 1px 4px ${colors.solid}33` : 'none',
                           }}
                         >
                           {val}
@@ -802,6 +1008,28 @@ export default function SortingVisualizer() {
                     })}
                   </div>
                 </div>
+              )}
+
+              {/* Sorted celebration card */}
+              {sorted && !celebrating && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="section-card p-5 text-center"
+                  style={{ borderColor: '#22c55e30' }}
+                >
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Trophy size={20} style={{ color: '#22c55e' }} />
+                    <span className="text-sm font-bold" style={{ color: '#22c55e' }}>Array Successfully Sorted!</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-6 text-[11px] opacity-50">
+                    <span className="font-mono">{compareCount} comparisons</span>
+                    <span>•</span>
+                    <span className="font-mono">{swapCount} swaps</span>
+                    <span>•</span>
+                    <span className="font-mono">{total} steps</span>
+                  </div>
+                </motion.div>
               )}
             </motion.div>
           )}
@@ -813,7 +1041,8 @@ export default function SortingVisualizer() {
               {/* Overview */}
               <div className="section-card p-5">
                 <div className="flex items-start gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-lg shrink-0">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0"
+                    style={{ background: `linear-gradient(135deg, ${info.color}20, ${info.color}08)` }}>
                     {info.icon}
                   </div>
                   <div>
@@ -824,11 +1053,15 @@ export default function SortingVisualizer() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {Object.entries(info.complexity).map(([key, val]) => (
-                    <div key={key} className="flex flex-col items-center p-2.5 rounded-lg bg-base-200/50 border border-base-300/30">
+                    <div key={key} className="flex flex-col items-center p-3 rounded-xl border border-base-300/30 sv-slide-up"
+                      style={{
+                        '--d': `${Object.keys(info.complexity).indexOf(key) * 50}ms`,
+                        background: `linear-gradient(135deg, ${cxColors[key]}08, transparent)`,
+                      }}>
                       <span className="text-[10px] opacity-40 font-semibold uppercase tracking-wider">
                         {key === 'avg' ? 'Average' : key.charAt(0).toUpperCase() + key.slice(1)}
                       </span>
-                      <span className="text-xs font-bold font-mono mt-0.5" style={{ color: cxColors[key] }}>
+                      <span className="text-sm font-bold font-mono mt-1" style={{ color: cxColors[key] }}>
                         {val}
                       </span>
                     </div>
@@ -854,13 +1087,14 @@ export default function SortingVisualizer() {
                 <h4 className="text-xs font-bold flex items-center gap-2 mb-3">
                   <BookOpen size={13} className="text-primary" /> How It Works
                 </h4>
-                <ol className="space-y-2">
+                <ol className="space-y-2.5">
                   {info.steps.map((s, i) => (
-                    <li key={i} className="flex items-start gap-2.5 text-xs">
-                      <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-[10px] mt-0.5">
+                    <li key={i} className="flex items-start gap-2.5 text-xs sv-slide-up" style={{ '--d': `${i * 60}ms` }}>
+                      <span className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 font-bold text-[10px] mt-0.5 text-white"
+                        style={{ background: info.gradient }}>
                         {i + 1}
                       </span>
-                      <span className="opacity-60 leading-relaxed">{s}</span>
+                      <span className="opacity-60 leading-relaxed pt-0.5">{s}</span>
                     </li>
                   ))}
                 </ol>
@@ -884,7 +1118,8 @@ export default function SortingVisualizer() {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden">
-                      <pre className="mt-3 p-4 rounded-xl bg-neutral text-neutral-content font-mono text-[11px] leading-relaxed overflow-x-auto">
+                      <pre className="mt-3 p-4 rounded-xl bg-neutral text-neutral-content font-mono text-[11px] leading-relaxed overflow-x-auto"
+                        style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}>
                         {info.pseudo}
                       </pre>
                     </motion.div>
@@ -897,11 +1132,11 @@ export default function SortingVisualizer() {
                 <h4 className="text-xs font-bold flex items-center gap-2 mb-3">
                   <Zap size={13} className="text-primary" /> When to Use
                 </h4>
-                <ul className="space-y-1.5">
+                <ul className="space-y-2">
                   {info.tips.map((t, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs opacity-60">
-                      <span className="mt-0.5" style={{ color: '#22c55e' }}>•</span>
-                      <span className="leading-relaxed">{t}</span>
+                    <li key={i} className="flex items-start gap-2.5 text-xs sv-slide-up" style={{ '--d': `${i * 60}ms` }}>
+                      <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: info.color }} />
+                      <span className="opacity-60 leading-relaxed">{t}</span>
                     </li>
                   ))}
                 </ul>
@@ -932,10 +1167,15 @@ export default function SortingVisualizer() {
                         <tr key={key}
                           className={`border-t border-base-300/20 transition-colors ${
                             algo === key ? 'bg-primary/[0.04]' : 'hover:bg-primary/[0.02]'
-                          }`}>
+                          }`}
+                          style={algo === key ? { boxShadow: `inset 3px 0 0 ${a.color}` } : undefined}>
                           <td className="px-4 py-3 font-semibold">
                             <span className="inline-flex items-center gap-2">
-                              <span>{a.icon}</span> {a.name}
+                              <span className="w-6 h-6 rounded-md flex items-center justify-center text-xs"
+                                style={{ background: `${a.color}15` }}>
+                                {a.icon}
+                              </span>
+                              <span style={algo === key ? { color: a.color } : undefined}>{a.name}</span>
                             </span>
                           </td>
                           <td className="px-4 py-3 text-center font-mono" style={{ color: cxColors.best }}>{a.complexity.best}</td>

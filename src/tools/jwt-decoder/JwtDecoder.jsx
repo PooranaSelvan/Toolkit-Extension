@@ -268,6 +268,24 @@ function checkRfcCompliance(header, payload) {
 function CollapsibleSection({ title, icon: Icon, color, badge, badgeClass, actions, defaultOpen = true, children }) {
   const [open, setOpen] = useState(defaultOpen);
   const contentRef = useRef(null);
+  const [contentHeight, setContentHeight] = useState('auto');
+
+  // Recalculate height when open state changes or children update
+  useEffect(() => {
+    if (open && contentRef.current) {
+      const updateHeight = () => {
+        setContentHeight(contentRef.current?.scrollHeight ?? 2000);
+      };
+      updateHeight();
+      // Use ResizeObserver to reactively track content size changes
+      let observer;
+      try {
+        observer = new ResizeObserver(updateHeight);
+        observer.observe(contentRef.current);
+      } catch { /* ResizeObserver not available */ }
+      return () => { if (observer) observer.disconnect(); };
+    }
+  }, [open, children]);
 
   return (
     <div className="section-card overflow-hidden">
@@ -286,7 +304,7 @@ function CollapsibleSection({ title, icon: Icon, color, badge, badgeClass, actio
         ref={contentRef}
         className="transition-all duration-200 ease-in-out overflow-hidden"
         style={{
-          maxHeight: open ? (contentRef.current?.scrollHeight ?? 2000) + 'px' : '0px',
+          maxHeight: open ? contentHeight + 'px' : '0px',
           opacity: open ? 1 : 0,
         }}
       >

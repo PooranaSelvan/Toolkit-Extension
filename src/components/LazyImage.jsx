@@ -104,7 +104,7 @@ export default function LazyImage({
       {/* Error fallback */}
       {error && !fallbackSrc && (
         <div className="absolute inset-0 bg-base-200 flex items-center justify-center">
-          <span className="text-base-content/20 text-sm font-bold">
+          <span className="text-base-content/40 text-sm font-bold">
             {fallbackText || alt?.charAt(0) || '?'}
           </span>
         </div>

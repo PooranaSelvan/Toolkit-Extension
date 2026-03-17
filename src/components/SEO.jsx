@@ -10,11 +10,15 @@ export default function SEO({
   url
 }) {
   const location = useLocation();
-  const currentUrl = url || `${window.location.origin}${location.pathname}`;
+
+  // Skip meta tag manipulation entirely in VS Code webview (not needed and may cause CSP issues)
+  const isWebview = isVsCodeWebview();
+
+  // Only compute currentUrl when not in webview to avoid unnecessary work
+  const currentUrl = isWebview ? '' : (url || `${window.location.origin}${location.pathname}`);
 
   useEffect(() => {
-    // Skip meta tag manipulation in VS Code webview (not needed and may cause CSP issues)
-    if (isVsCodeWebview()) return;
+    if (isWebview) return;
 
     try {
       // Update document title

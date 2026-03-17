@@ -23,9 +23,9 @@ export default function EmptyState({
         className={`text-center py-10 px-4 ${className}`}
         role="status"
       >
-        <Icon size={24} className="opacity-15 mx-auto mb-3" aria-hidden="true" />
-        <p className="text-sm font-medium opacity-45">{title}</p>
-        {description && <p className="text-xs opacity-30 mt-1">{description}</p>}
+        <Icon size={24} className="opacity-30 mx-auto mb-3" aria-hidden="true" />
+        <p className="text-sm font-medium opacity-55">{title}</p>
+        {description && <p className="text-xs opacity-45 mt-1">{description}</p>}
         {action && <div className="flex justify-center mt-4">{action}</div>}
       </motion.div>
     );
@@ -43,28 +43,28 @@ export default function EmptyState({
         <motion.div
           animate={{ y: [0, -6, 0] }}
           transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          className={`${variant === 'large' ? 'w-24 h-24' : 'w-20 h-20'} rounded-2xl bg-base-200/80 flex items-center justify-center mx-auto mb-6 relative`}
+          className={`${variant === 'large' ? 'w-24 h-24' : 'w-20 h-20'} rounded-2xl bg-base-200/80 flex items-center justify-center mx-auto mb-6 relative border border-base-300/30 shadow-sm`}
         >
-          <Icon size={variant === 'large' ? 38 : 32} className="opacity-20" aria-hidden="true" />
+          <Icon size={variant === 'large' ? 38 : 32} className="opacity-35" aria-hidden="true" />
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 300, damping: 15 }}
-            className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-warning/20 flex items-center justify-center"
+            className="absolute -top-1.5 -right-1.5 w-7 h-7 rounded-full bg-warning/15 flex items-center justify-center border border-warning/20 shadow-sm"
           >
             <AlertCircle size={14} className="text-warning" />
           </motion.div>
         </motion.div>
 
         <h3 className={`${variant === 'large' ? 'text-xl' : 'text-lg'} font-bold mb-2`}>{title}</h3>
-        <p className="text-sm opacity-50 mb-2 leading-relaxed">{description}</p>
+        <p className="text-sm opacity-60 mb-2 leading-relaxed">{description}</p>
 
         {hint && (
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="text-xs opacity-30 mb-6 flex items-center justify-center gap-1.5"
+            className="text-xs opacity-45 mb-6 flex items-center justify-center gap-1.5"
           >
             <Sparkles size={10} />
             {hint}

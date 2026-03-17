@@ -22,6 +22,20 @@ export default function useLocalStorage(key, initialValue) {
 
   const pendingWriteRef = useRef(null);
   const latestValueRef = useRef(storedValue);
+  const keyRef = useRef(key);
+
+  // When key changes, flush any pending write for the OLD key before switching
+  useEffect(() => {
+    const previousKey = keyRef.current;
+    if (previousKey !== key && pendingWriteRef.current) {
+      clearTimeout(pendingWriteRef.current);
+      pendingWriteRef.current = null;
+      try {
+        window.localStorage.setItem(previousKey, JSON.stringify(latestValueRef.current));
+      } catch { /* ignore */ }
+    }
+    keyRef.current = key;
+  }, [key]);
 
   // Flush any pending write to localStorage on unmount
   useEffect(() => {
@@ -29,11 +43,11 @@ export default function useLocalStorage(key, initialValue) {
       if (pendingWriteRef.current) {
         clearTimeout(pendingWriteRef.current);
         try {
-          window.localStorage.setItem(key, JSON.stringify(latestValueRef.current));
+          window.localStorage.setItem(keyRef.current, JSON.stringify(latestValueRef.current));
         } catch { /* ignore */ }
       }
     };
-  }, [key]);
+  }, []);
 
   const setValue = useCallback(
     (value) => {

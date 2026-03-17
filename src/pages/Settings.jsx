@@ -93,7 +93,7 @@ export default function Settings() {
           </div>
           Settings
         </h1>
-        <p className="text-sm opacity-60 mt-1 ml-[52px]">
+        <p className="text-sm opacity-65 mt-1 ml-[52px]">
           Customize your WebToolkit experience
         </p>
       </motion.div>
@@ -117,7 +117,7 @@ export default function Settings() {
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="rounded-xl glass-base !bg-base-200/30 p-4 group/card hover:!bg-base-200/50 transition-colors duration-200">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium opacity-50">Storage Used</span>
+                <span className="text-xs font-medium opacity-60">Storage Used</span>
                 <Database size={16} className="text-primary opacity-40 group-hover/card:opacity-70 transition-opacity duration-200" />
               </div>
               <p className="text-2xl font-bold">
@@ -132,17 +132,17 @@ export default function Settings() {
                   className="h-full bg-primary/60 rounded-full"
                 />
               </div>
-              <p className="text-[11px] opacity-40 mt-1.5">API history, collections, preferences</p>
+              <p className="text-[11px] opacity-50 mt-1.5">API history, collections, preferences</p>
             </div>
             <div className="rounded-xl glass-base !bg-base-200/30 p-4 group/card hover:!bg-base-200/50 transition-colors duration-200">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium opacity-50">Storage Items</span>
+                <span className="text-xs font-medium opacity-60">Storage Items</span>
                 <Info size={16} className="text-secondary opacity-40 group-hover/card:opacity-70 transition-opacity duration-200" />
               </div>
               <p className="text-2xl font-bold">
                 {storageItemCount}
               </p>
-              <p className="text-[11px] opacity-40 mt-1">Keys stored in browser</p>
+              <p className="text-[11px] opacity-50 mt-1">Keys stored in browser</p>
             </div>
           </div>
 
@@ -252,7 +252,7 @@ export default function Settings() {
                     Creator
                   </span>
                 </div>
-                <p className="text-xs opacity-50 flex items-center gap-1.5">
+                <p className="text-xs opacity-60 flex items-center gap-1.5">
                   <GithubIcon size={12} />
                   @{AUTHOR.username}
                   {AUTHOR.location && (
@@ -267,7 +267,7 @@ export default function Settings() {
             </div>
 
             {/* Bio */}
-            <p className="text-sm leading-relaxed opacity-65 mb-5">
+            <p className="text-sm leading-relaxed opacity-70 mb-5">
               {AUTHOR.bio}
             </p>
 
@@ -307,7 +307,7 @@ export default function Settings() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold mb-0.5">Enjoying WebToolkit?</p>
-                <p className="text-xs opacity-50">Star the repo on GitHub to show your support and help others discover it!</p>
+                <p className="text-xs opacity-60">Star the repo on GitHub to show your support and help others discover it!</p>
               </div>
               <a
                 href={`${AUTHOR.github}/Toolkit-Extension`}
@@ -352,7 +352,7 @@ export default function Settings() {
 
           {/* Footer attribution */}
           <div className="mt-5 pt-4 border-t border-base-200">
-            <p className="text-xs opacity-40 flex items-center justify-center gap-1.5 flex-wrap">
+            <p className="text-xs opacity-50 flex items-center justify-center gap-1.5 flex-wrap">
               Made with <Heart size={12} className="text-error" /> by
               <a
                 href={AUTHOR.github}

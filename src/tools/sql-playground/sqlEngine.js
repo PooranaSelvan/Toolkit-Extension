@@ -503,11 +503,12 @@ function parseSelect(parser) {
   parser.expect('KEYWORD', 'FROM');
   const table = parser.advance().value;
   let tableAlias = null;
-  if (parser.match('IDENT') && !['WHERE', 'ORDER', 'GROUP', 'LIMIT', 'JOIN', 'INNER', 'LEFT', 'RIGHT', 'CROSS'].includes(parser.peek()?.value?.toUpperCase())) {
-    tableAlias = parser.advance().value;
-  }
   if (parser.matchKeyword('AS')) {
     parser.advance();
+    tableAlias = parser.advance().value;
+  } else if (parser.match('IDENT')) {
+    // Implicit alias — the next token is an IDENT (not a keyword like WHERE, JOIN, etc.)
+    // Since keywords are tokenized as 'KEYWORD' type, an 'IDENT' here is safe to consume as alias
     tableAlias = parser.advance().value;
   }
 

@@ -25,12 +25,6 @@ function getRecentTools() {
 
 const FEATURED_TOOL_IDS = ['api-tester', 'json-formatter', 'color-palette', 'grid-generator', 'regex-generator', 'jwt-decoder'];
 
-
-
-/**
- * Lightweight visibility hook using a single shared IntersectionObserver.
- * Replaces framer-motion's useInView which creates one observer per call.
- */
 function useOnScreen(ref, { once = true, margin = '-60px' } = {}) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -51,20 +45,25 @@ function useOnScreen(ref, { once = true, margin = '-60px' } = {}) {
   return visible;
 }
 
-// Animated counter — uses lightweight useOnScreen instead of framer useInView
 function useCounter(target, duration = 1200) {
   const [count, setCount] = useState(0);
   const ref = useRef(null);
   const isInView = useOnScreen(ref, { once: true, margin: '-50px' });
   const hasAnimated = useRef(false);
 
+  const targetRef = useRef(target);
+  const durationRef = useRef(duration);
+  targetRef.current = target;
+  durationRef.current = duration;
+
   useEffect(() => {
     if (!isInView || hasAnimated.current) return;
-    const end = Math.max(0, Math.round(Number(target) || 0));
+    const end = Math.max(0, Math.round(Number(targetRef.current) || 0));
     if (end <= 0) { setCount(0); return; }
     hasAnimated.current = true;
     let start = 0;
-    const steps = Math.max(1, Math.ceil(duration / 16));
+    const dur = durationRef.current;
+    const steps = Math.max(1, Math.ceil(dur / 16));
     const increment = end / steps;
     const timer = setInterval(() => {
       start += increment;
@@ -72,46 +71,48 @@ function useCounter(target, duration = 1200) {
       else setCount(Math.floor(start));
     }, 16);
     return () => clearInterval(timer);
-  }, [isInView, target, duration]);
+  }, [isInView]);
 
   return { count, ref };
 }
 
-/* AnimatedSection — CSS class-based reveal instead of framer-motion per-section.
-   Avoids creating a motion.div + IntersectionObserver for every section. */
 function AnimatedSection({ children, className = '' }) {
   const ref = useRef(null);
   const visible = useOnScreen(ref, { once: true, margin: '-60px' });
   return (
     <div
       ref={ref}
-      className={`transition-all duration-500 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} ${className}`}
+      className={`transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} ${className}`}
     >
       {children}
     </div>
   );
 }
 
-// Feature card — lightweight, no per-card motion wrapper
-function FeatureCard({ icon: Icon, title, description, color, accentColor }) {
+function FeatureCard({ icon: Icon, title, description, color, accentColor, index = 0 }) {
   return (
-    <div
-      className="group rounded-2xl border border-base-300/40 bg-base-100/80 p-6 h-full flex flex-col transition-all duration-200 hover:border-primary/25 hover:shadow-lg hover:shadow-primary/[0.06] hover:-translate-y-1 feature-accent-card relative overflow-hidden"
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.5, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+      className="group rounded-2xl border border-base-300/40 bg-base-100/80 p-6 h-full flex flex-col transition-all duration-300 hover:border-primary/25 hover:shadow-xl hover:shadow-primary/[0.08] hover:-translate-y-1.5 feature-accent-card relative overflow-hidden"
       style={{ '--accent-color': accentColor }}
     >
-      <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center mb-4 shadow-lg transition-transform duration-200 group-hover:scale-105`}>
+      {/* Subtle gradient overlay on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-primary/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+      <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center mb-4 shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl relative z-10`}>
         <Icon size={22} className="text-white" />
       </div>
-      <h3 className="text-base font-bold mb-2 group-hover:text-primary transition-colors duration-200">{title}</h3>
-      <p className="text-sm opacity-50 leading-relaxed flex-1">{description}</p>
-      <div className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-primary/0 group-hover:text-primary/60 transition-all duration-200">
-        Learn more <ChevronRight size={12} />
+      <h3 className="text-base font-bold mb-2 group-hover:text-primary transition-colors duration-200 relative z-10">{title}</h3>
+      <p className="text-sm opacity-60 leading-relaxed flex-1 relative z-10">{description}</p>
+      <div className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-primary/0 group-hover:text-primary/70 transition-all duration-300 relative z-10">
+        Learn more <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform duration-300" />
       </div>
-    </div>
+    </motion.div>
   );
 }
 
-// Tool showcase card — lightweight, no per-card motion wrapper
 function ToolShowcaseCard({ tool }) {
   const Icon = tool.icon;
   const category = CATEGORIES.find((c) => c.id === tool.category);
@@ -128,32 +129,36 @@ function ToolShowcaseCard({ tool }) {
         } catch {}
       }}
     >
-      <div className="h-full rounded-2xl border border-base-300/40 bg-base-100/80 p-6 transition-all duration-200 hover:border-primary/25 hover:shadow-lg hover:shadow-primary/[0.08] hover:-translate-y-1 relative overflow-hidden">
-        <div className="flex items-start justify-between mb-4">
-          <div className="w-14 h-14 rounded-2xl bg-primary/[0.08] flex items-center justify-center text-primary transition-all duration-200 group-hover:bg-primary/[0.14] group-hover:scale-105">
+      <div className="h-full rounded-2xl border border-base-300/40 bg-base-100/80 p-6 transition-all duration-300 hover:border-primary/25 hover:shadow-xl hover:shadow-primary/[0.08] hover:-translate-y-1.5 relative overflow-hidden card-hover-glow">
+        {/* Animated corner accent */}
+        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-primary/[0.04] to-transparent rounded-bl-[100%] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+        <div className="flex items-start justify-between mb-4 relative z-10">
+          <div className="w-14 h-14 rounded-2xl bg-primary/[0.08] flex items-center justify-center text-primary transition-all duration-300 group-hover:bg-primary/[0.14] group-hover:scale-110 group-hover:rotate-[-3deg]">
             <Icon size={26} strokeWidth={1.7} />
           </div>
           <ArrowUpRight
             size={18}
-            className="opacity-0 transition-opacity duration-200 group-hover:opacity-50 text-primary"
+            className="opacity-0 -translate-x-1 translate-y-1 transition-all duration-300 group-hover:opacity-50 group-hover:translate-x-0 group-hover:translate-y-0 text-primary"
           />
         </div>
 
-        <h3 className="text-[15px] font-bold mb-2 group-hover:text-primary transition-colors duration-200">
+        <h3 className="text-[15px] font-bold mb-2 group-hover:text-primary transition-colors duration-200 relative z-10">
           {tool.name}
         </h3>
-        <p className="text-xs text-base-content/50 leading-relaxed mb-4 line-clamp-2">
+        <p className="text-xs text-base-content/60 leading-relaxed mb-4 line-clamp-2 relative z-10">
           {tool.description}
         </p>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between relative z-10">
           {category && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-base-200/60 text-[10px] text-base-content/40 font-semibold border border-base-300/20">
-              {category.emoji} {category.label}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-base-200/60 text-[10px] text-base-content/55 font-semibold border border-base-300/20 group-hover:border-primary/15 group-hover:bg-primary/[0.04] transition-all duration-300">
+              {(() => { const CatIcon = category.icon; return CatIcon ? <CatIcon size={10} strokeWidth={2} className="shrink-0" /> : null; })()}
+              {category.label}
             </span>
           )}
-          <span className="text-[11px] font-semibold text-primary opacity-0 group-hover:opacity-70 transition-opacity duration-200 flex items-center gap-1">
-            Open <ChevronRight size={12} />
+          <span className="text-[11px] font-semibold text-primary opacity-0 group-hover:opacity-80 transition-all duration-300 flex items-center gap-1">
+            Open <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform duration-300" />
           </span>
         </div>
       </div>
@@ -194,7 +199,7 @@ function HeroSearchPreview({ tools }) {
       className="relative max-w-md mx-auto mb-6 px-4 sm:px-0"
     >
       <div className={`relative flex items-center rounded-2xl border ${focused ? 'border-primary/40 shadow-lg shadow-primary/10' : 'border-base-300/50'} bg-base-100/90 backdrop-blur-sm transition-all duration-300`}>
-        <Search size={16} className={`ml-4 shrink-0 ${focused ? 'text-primary' : 'opacity-30'} transition-colors duration-200`} />
+        <Search size={16} className={`ml-4 shrink-0 ${focused ? 'text-primary' : 'opacity-45'} transition-colors duration-200`} />
         <input
           ref={inputRef}
           type="text"
@@ -208,14 +213,14 @@ function HeroSearchPreview({ tools }) {
           onBlur={() => {
             blurTimeoutRef.current = setTimeout(() => setFocused(false), 200);
           }}
-          className="w-full bg-transparent border-none outline-none px-3 py-3 text-sm font-medium placeholder:opacity-35 min-w-0"
+          className="w-full bg-transparent border-none outline-none px-3 py-3 text-sm font-medium placeholder:opacity-50 min-w-0"
           maxLength={100}
           aria-label="Search tools"
           autoComplete="off"
           spellCheck="false"
         />
         {query && (
-          <button onClick={() => { setQuery(''); inputRef.current?.focus(); }} className="mr-3 opacity-30 hover:opacity-60 transition-opacity shrink-0 p-1" aria-label="Clear search">
+          <button onClick={() => { setQuery(''); inputRef.current?.focus(); }} className="mr-3 opacity-45 hover:opacity-70 transition-opacity shrink-0 p-1" aria-label="Clear search">
             <span className="text-xs font-bold">✕</span>
           </button>
         )}
@@ -246,9 +251,9 @@ function HeroSearchPreview({ tools }) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold truncate">{tool.name}</p>
-                    <p className="text-[10px] opacity-40 truncate">{tool.description}</p>
+                    <p className="text-[10px] opacity-50 truncate">{tool.description}</p>
                   </div>
-                  <ArrowRight size={12} className="opacity-20 shrink-0 ml-auto" />
+                  <ArrowRight size={12} className="opacity-35 shrink-0 ml-auto" />
                 </Link>
               );
             })}
@@ -279,13 +284,13 @@ function CategoryShowcaseCard({ category, categoryTools }) {
           {categoryTools.slice(0, 4).map((tool) => {
             const ToolIcon = tool.icon;
             return (
-              <div key={tool.id} className="w-8 h-8 rounded-lg bg-base-200/80 flex items-center justify-center text-base-content/40 group-hover:text-primary/60 transition-colors duration-200 border border-base-300/20">
+              <div key={tool.id} className="w-8 h-8 rounded-lg bg-base-200/80 flex items-center justify-center text-base-content/55 group-hover:text-primary/70 transition-colors duration-200 border border-base-300/20">
                 <ToolIcon size={14} strokeWidth={1.8} />
               </div>
             );
           })}
           {categoryTools.length > 4 && (
-            <div className="w-8 h-8 rounded-lg bg-base-200/80 flex items-center justify-center text-[10px] font-bold text-base-content/30 border border-base-300/20">
+            <div className="w-8 h-8 rounded-lg bg-base-200/80 flex items-center justify-center text-[10px] font-bold text-base-content/50 border border-base-300/20">
               +{categoryTools.length - 4}
             </div>
           )}
@@ -298,12 +303,12 @@ function CategoryShowcaseCard({ category, categoryTools }) {
             </span>
           ))}
           {categoryTools.length > 3 && (
-            <span className="badge badge-ghost badge-xs font-medium opacity-50">
+            <span className="badge badge-ghost badge-xs font-medium opacity-60">
               +{categoryTools.length - 3} more
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-primary opacity-60 group-hover:opacity-100 transition-opacity duration-200">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-primary opacity-70 group-hover:opacity-100 transition-opacity duration-200">
           Browse category <ChevronRight size={13} />
         </div>
       </div>
@@ -403,7 +408,7 @@ export default function HomePage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-2xl mx-auto text-base sm:text-lg opacity-50 leading-relaxed mb-8 px-4"
+          className="max-w-2xl mx-auto text-base sm:text-lg opacity-60 leading-relaxed mb-8 px-4"
         >
           {tools.length} beautifully crafted, lightning-fast utilities — all running client-side
           with zero data collection. Build faster, ship better.
@@ -452,7 +457,7 @@ export default function HomePage() {
           ].map(({ icon: Icon, text, color }) => (
             <span
               key={text}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-base-200/60 border border-base-300/30 text-xs font-medium cursor-default opacity-60 hover:opacity-100 transition-opacity duration-200"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-base-200/60 border border-base-300/30 text-xs font-medium cursor-default opacity-70 hover:opacity-100 transition-opacity duration-200"
             >
               <Icon size={12} className={color} /> {text}
             </span>
@@ -470,7 +475,7 @@ export default function HomePage() {
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
             Built for <span className="gradient-text">Speed & Privacy</span>
           </h2>
-          <p className="text-sm opacity-45 mt-3 max-w-lg mx-auto leading-relaxed">
+          <p className="text-sm opacity-55 mt-3 max-w-lg mx-auto leading-relaxed">
             Every tool runs entirely in your browser — your data never leaves your machine.
           </p>
         </div>
@@ -517,7 +522,7 @@ export default function HomePage() {
               </div>
               <div>
                 <h2 className="text-base font-bold">Continue Where You Left Off</h2>
-                <p className="text-[11px] opacity-40 mt-0.5">Your recently used tools</p>
+                <p className="text-[11px] opacity-55 mt-0.5">Your recently used tools</p>
               </div>
             </div>
             <Link to="/dashboard" className="text-[11px] font-semibold text-primary/60 hover:text-primary transition-colors duration-200 flex items-center gap-1 group">
@@ -538,7 +543,7 @@ export default function HomePage() {
                   </div>
                   <div className="min-w-0">
                     <span className="text-xs font-bold truncate block group-hover:text-primary transition-colors duration-200">{tool.name}</span>
-                    <span className="text-[10px] opacity-35 truncate block">{tool.description.slice(0, 30)}...</span>
+                    <span className="text-[10px] opacity-50 truncate block">{tool.description.slice(0, 30)}...</span>
                   </div>
                 </Link>
               );
@@ -557,7 +562,7 @@ export default function HomePage() {
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
               Popular Tools
             </h2>
-            <p className="text-sm opacity-45 mt-2">The most-loved utilities in our collection</p>
+            <p className="text-sm opacity-55 mt-2">The most-loved utilities in our collection</p>
           </div>
           <Link
             to="/dashboard"
@@ -584,7 +589,7 @@ export default function HomePage() {
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
             Explore by <span className="gradient-text">Category</span>
           </h2>
-          <p className="text-sm opacity-45 mt-3">Find the right tool for every task</p>
+          <p className="text-sm opacity-55 mt-3">Find the right tool for every task</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
@@ -626,7 +631,7 @@ export default function HomePage() {
                 <div ref={counter?.ref ?? undefined} className="text-xl sm:text-3xl lg:text-4xl font-extrabold mb-1.5">
                   <span className="counter-highlight gradient-text">{displayValue}{suffix}</span>
                 </div>
-                <p className="text-[10px] sm:text-xs font-semibold opacity-45 tracking-wide">{label}</p>
+                <p className="text-[10px] sm:text-xs font-semibold opacity-55 tracking-wide">{label}</p>
               </div>
             );
           })}
@@ -642,7 +647,7 @@ export default function HomePage() {
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
             All <span className="gradient-text">{tools.length} Tools</span>
           </h2>
-          <p className="text-sm opacity-45 mt-3 max-w-md mx-auto">Every utility you need, in one place — explore the full collection</p>
+          <p className="text-sm opacity-55 mt-3 max-w-md mx-auto">Every utility you need, in one place — explore the full collection</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -674,7 +679,7 @@ export default function HomePage() {
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-4 tracking-tight">
               Ready to <span className="gradient-text-animated">Build Faster</span>?
             </h2>
-            <p className="text-sm sm:text-base opacity-50 max-w-lg mx-auto mb-10 leading-relaxed">
+            <p className="text-sm sm:text-base opacity-60 max-w-lg mx-auto mb-10 leading-relaxed">
               Jump into the dashboard and start using {tools.length}+ tools right now.
               No sign-up, no limits — completely free.
             </p>
@@ -728,14 +733,15 @@ export default function HomePage() {
                   <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
                 </svg>
               </p>
-              <p className="text-[10px] opacity-30">@PooranaSelvan</p>
+              <p className="text-[10px] opacity-45">@PooranaSelvan</p>
             </div>
           </a>
-          <p className="text-[11px] opacity-20 flex items-center gap-1.5 flex-wrap justify-center">
+          <p className="text-[11px] opacity-35 flex items-center gap-1.5 flex-wrap justify-center">
             Crafted with <Heart size={10} className="text-error" aria-label="love" /> by Poorana Selvan
           </p>
         </div>
-      </footer>      </div>
+      </footer>
+      </div>
     </>
   );
 }

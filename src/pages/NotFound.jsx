@@ -20,16 +20,19 @@ export default function NotFound() {
         initial={{ opacity: 0, scale: 0.92, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="rounded-2xl max-w-md w-full shadow-xl border border-base-300/40 bg-base-100 overflow-hidden"
+        className="rounded-2xl max-w-md w-full shadow-xl shadow-base-content/[0.04] border border-base-300/30 bg-base-100 overflow-hidden relative"
       >
-        <div className="p-8 sm:p-12 text-center">
+        {/* Background gradient accent */}
+        <div className="absolute inset-0 bg-gradient-to-br from-error/[0.02] via-transparent to-primary/[0.02] pointer-events-none" />
+
+        <div className="p-8 sm:p-12 text-center relative z-10">
           <motion.div
             className="mb-6"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.15, type: 'spring', stiffness: 300, damping: 20 }}
           >
-            <div className="w-20 h-20 mx-auto rounded-2xl bg-error/10 flex items-center justify-center border border-error/20 relative">
+            <div className="w-20 h-20 mx-auto rounded-2xl bg-error/10 flex items-center justify-center border border-error/15 relative shadow-lg shadow-error/10">
               <div className="absolute inset-0 rounded-2xl bg-error/5 animate-glow-pulse" />
               <AlertCircle size={36} className="text-error relative z-10" />
             </div>
