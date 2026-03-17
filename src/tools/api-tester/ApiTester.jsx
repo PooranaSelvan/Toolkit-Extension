@@ -327,14 +327,12 @@ export default function ApiTester() {
                     onKeyDown={(e) => e.key === 'Enter' && handleSaveToCollection()}
                     autoFocus
                   />
-                  <motion.button whileTap={{ scale: 0.9 }} onClick={handleSaveToCollection} className="btn btn-primary btn-xs rounded-lg shadow-sm shadow-primary/20">Save</motion.button>
-                  <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowSaveInput(false)} className="btn btn-ghost btn-xs rounded-lg">Cancel</motion.button>
+                  <motion.button onClick={handleSaveToCollection} className="btn btn-primary btn-xs rounded-lg shadow-sm shadow-primary/20">Save</motion.button>
+                  <motion.button onClick={() => setShowSaveInput(false)} className="btn btn-ghost btn-xs rounded-lg">Cancel</motion.button>
                 </motion.div>
               ) : (
                 <motion.button
                   key="save-btn"
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
                   onClick={() => setShowSaveInput(true)}
                   className="btn btn-ghost btn-xs gap-1.5 rounded-xl hover:bg-base-200/80"
                   disabled={!request.url.trim()}
@@ -346,8 +344,6 @@ export default function ApiTester() {
             </AnimatePresence>
 
             <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
               onClick={() => setShowCollections(!showCollections)}
               className={`btn btn-xs gap-1.5 rounded-xl transition-all duration-200 ${showCollections ? 'btn-secondary shadow-md shadow-secondary/20' : 'btn-ghost hover:bg-base-200/80'}`}
             >
@@ -356,8 +352,6 @@ export default function ApiTester() {
             </motion.button>
 
             <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
               onClick={() => setShowCodeGen(!showCodeGen)}
               className={`btn btn-xs gap-1.5 rounded-xl transition-all duration-200 ${showCodeGen ? 'btn-secondary shadow-md shadow-secondary/20' : 'btn-ghost hover:bg-base-200/80'}`}
               disabled={!request.url.trim()}
@@ -367,8 +361,6 @@ export default function ApiTester() {
             </motion.button>
 
             <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
               onClick={() => { closeAllPanels(); setShowEnvManager(!showEnvManager); }}
               className={`btn btn-xs gap-1.5 rounded-xl transition-all duration-200 ${showEnvManager ? 'btn-secondary shadow-md shadow-secondary/20' : 'btn-ghost hover:bg-base-200/80'}`}
             >
@@ -378,8 +370,6 @@ export default function ApiTester() {
             </motion.button>
 
             <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
               onClick={() => { closeAllPanels(); setShowWebSocket(!showWebSocket); }}
               className={`btn btn-xs gap-1.5 rounded-xl transition-all duration-200 ${showWebSocket ? 'btn-secondary shadow-md shadow-secondary/20' : 'btn-ghost hover:bg-base-200/80'}`}
             >
@@ -390,8 +380,6 @@ export default function ApiTester() {
             {/* More actions dropdown */}
             <div className="relative">
               <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
                 onClick={() => setShowMoreActions(!showMoreActions)}
                 className={`btn btn-xs gap-1 rounded-xl transition-all duration-200 ${showMoreActions ? 'btn-secondary' : 'btn-ghost hover:bg-base-200/80'}`}
               >

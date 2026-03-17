@@ -165,7 +165,7 @@ export default function WebSocketTester({ onClose }) {
                 <Clock size={10} /> {formatDuration(Date.now() - connectedAt)}
               </span>
             )}
-            <motion.button whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.9 }} onClick={onClose} className="btn btn-ghost btn-xs rounded-lg">
+            <motion.button onClick={onClose} className="btn btn-ghost btn-xs rounded-lg">
               <X size={14} />
             </motion.button>
           </div>
@@ -337,8 +337,6 @@ export default function WebSocketTester({ onClose }) {
           </div>
           <div className="flex sm:flex-col gap-1.5 shrink-0">
             <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
               onClick={handleSend}
               disabled={!isConnected || !message.trim()}
               className="btn btn-primary btn-sm gap-1.5 rounded-xl flex-1"

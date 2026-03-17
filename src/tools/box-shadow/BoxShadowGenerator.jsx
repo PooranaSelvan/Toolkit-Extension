@@ -2,8 +2,8 @@ import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Square, Copy, Check, Plus, X, Trash2, Download,
-  RefreshCw, Sparkles, Eye, Layers, Move,
-  ChevronDown, ChevronUp, Settings,
+  RefreshCw, Sparkles, Eye, Layers,
+  Settings,
 } from 'lucide-react';
 import useCopyToClipboard from '../../hooks/useCopyToClipboard';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -43,7 +43,7 @@ function hexToRgba(hex, opacity) {
 function buildShadowCSS(shadows) {
   return shadows.map(s =>
     `${s.inset ? 'inset ' : ''}${s.x}px ${s.y}px ${s.blur}px ${s.spread}px ${hexToRgba(s.color, s.opacity)}`
-  ).join(',\n    ');
+  ).join(', ');
 }
 
 function defaultShadow() {
@@ -194,11 +194,13 @@ export default function BoxShadowGenerator() {
 
       {/* ── Preview ── */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <div className="section-card overflow-hidden">
-          <div className="flex items-center justify-center p-8 sm:p-12 min-h-[280px]" style={{ backgroundColor: bgColor }}>
-            <motion.div
-              layout
-              className="transition-all duration-300"
+        <div className="section-card overflow-visible">
+          <div
+            className="flex items-center justify-center p-8 sm:p-12 min-h-[280px] rounded-xl"
+            style={{ backgroundColor: bgColor }}
+          >
+            <div
+              className="transition-shadow duration-300"
               style={{
                 width: boxWidth,
                 height: boxHeight,
@@ -282,22 +284,22 @@ export default function BoxShadowGenerator() {
             </AnimatePresence>
 
             {/* Hover Animation Preview */}
-            <div className="section-card p-5">
+            <div className="section-card overflow-visible p-5">
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Eye size={14} className="text-primary" /> Hover Animation Preview</h3>
               <p className="text-xs opacity-40 mb-4">Hover over the boxes to see the shadow applied as a hover effect</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" style={{ backgroundColor: bgColor, padding: '1.5rem', borderRadius: '0.75rem' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 overflow-visible" style={{ backgroundColor: bgColor, padding: '1.5rem', borderRadius: '0.75rem' }}>
                 {['Card', 'Button', 'Badge'].map((label) => (
-                  <div key={label} className="group">
+                  <div key={label} className="group overflow-visible">
                     <div
-                      className="transition-all duration-300 flex items-center justify-center cursor-pointer hover:translate-y-[-4px]"
+                      className="transition-[box-shadow,transform] duration-300 flex items-center justify-center cursor-pointer hover:translate-y-[-4px]"
                       style={{
                         backgroundColor: boxColor,
                         borderRadius: `${borderRadius}px`,
                         height: '80px',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.boxShadow = shadowCSS}
-                      onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)'}
+                      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = shadowCSS; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)'; }}
                     >
                       <span className="text-xs font-semibold opacity-40">{label}</span>
                     </div>
@@ -313,20 +315,19 @@ export default function BoxShadowGenerator() {
                 <div className="relative">
                   <label className="text-[10px] font-bold uppercase tracking-wider opacity-40 mb-1 block">CSS</label>
                   <pre className="p-3 rounded-lg bg-neutral text-neutral-content font-mono text-xs leading-relaxed overflow-x-auto">
-                    {`box-shadow: ${shadowCSS};`}
+                    {fullCSS}
                   </pre>
-                  <button onClick={() => copyToClipboard(`box-shadow: ${shadowCSS};`)} className="absolute top-6 right-2 btn btn-xs btn-ghost text-neutral-content/60"><Copy size={11} /></button>
+                  <button onClick={() => copyToClipboard(fullCSS)} className="absolute top-6 right-2 btn btn-xs btn-ghost text-neutral-content/60"><Copy size={11} /></button>
                 </div>
                 <div className="relative">
                   <label className="text-[10px] font-bold uppercase tracking-wider opacity-40 mb-1 block">Tailwind (arbitrary)</label>
                   <pre className="p-3 rounded-lg bg-neutral text-neutral-content font-mono text-xs leading-relaxed overflow-x-auto">
-                    {`shadow-[${shadowCSS.replace(/\n\s*/g, '')}]`}
+                    {`shadow-[${shadowCSS.replace(/,\s*/g, ',').replace(/\s+/g, '_')}]`}
                   </pre>
-                  <button onClick={() => copyToClipboard(`shadow-[${shadowCSS.replace(/\n\s*/g, '')}]`)} className="absolute top-6 right-2 btn btn-xs btn-ghost text-neutral-content/60"><Copy size={11} /></button>
+                  <button onClick={() => copyToClipboard(`shadow-[${shadowCSS.replace(/,\s*/g, ',').replace(/\s+/g, '_')}]`)} className="absolute top-6 right-2 btn btn-xs btn-ghost text-neutral-content/60"><Copy size={11} /></button>
                 </div>
               </div>
-            </div>
-          </motion.div>
+            </div>          </motion.div>
         )}
 
         {/* ── Presets Tab ── */}
@@ -334,11 +335,11 @@ export default function BoxShadowGenerator() {
           <motion.div key="presets" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {SHADOW_PRESETS.map(preset => (
-                <button key={preset.name} onClick={() => loadPreset(preset)} className="section-card p-4 text-left group hover:border-primary/30 transition-all hover:-translate-y-1">
-                  <div className="flex items-center justify-center h-20 mb-3">
+                <button key={preset.name} onClick={() => loadPreset(preset)} className="section-card overflow-visible p-4 text-left group hover:border-primary/30 transition-all hover:-translate-y-1">
+                  <div className="flex items-center justify-center h-20 mb-3 overflow-visible">
                     <div
-                      className="w-14 h-14 bg-white rounded-xl transition-all"
-                      style={{ boxShadow: buildShadowCSS(preset.shadows) }}
+                      className="w-14 h-14 rounded-xl transition-shadow duration-300"
+                      style={{ boxShadow: buildShadowCSS(preset.shadows), backgroundColor: '#ffffff' }}
                     />
                   </div>
                   <p className="text-xs font-semibold text-center group-hover:text-primary transition-colors">{preset.name}</p>
@@ -365,9 +366,9 @@ export default function BoxShadowGenerator() {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {savedShadows.map(ss => (
-                    <div key={ss.id} className="section-card p-4 group cursor-pointer hover:border-primary/30 transition-all" onClick={() => loadPreset(ss)}>
-                      <div className="flex items-center justify-center h-20 mb-2">
-                        <div className="w-14 h-14 bg-white rounded-xl" style={{ boxShadow: ss.css }} />
+                    <div key={ss.id} className="section-card overflow-visible p-4 group cursor-pointer hover:border-primary/30 transition-all" onClick={() => loadPreset(ss)}>
+                      <div className="flex items-center justify-center h-20 mb-2 overflow-visible">
+                        <div className="w-14 h-14 rounded-xl" style={{ boxShadow: ss.css, backgroundColor: '#ffffff' }} />
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] opacity-30">{ss.createdAt}</span>

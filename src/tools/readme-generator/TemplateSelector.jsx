@@ -19,8 +19,6 @@ export default function TemplateSelector({ selected, onSelect }) {
         {Object.entries(TEMPLATES).map(([key, tmpl]) => (
           <motion.button
             key={key}
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
             onClick={() => onSelect(key)}
             className={`btn btn-xs gap-1.5 rounded-lg transition-all duration-200 ${selected === key ? 'btn-primary shadow-md shadow-primary/25' : 'btn-ghost hover:bg-base-100/80'}`}
             title={tmpl.description}

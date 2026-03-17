@@ -145,8 +145,6 @@ export default function ResponsePanel({ response, loading, tests = [] }) {
 
           <div className="ml-auto flex items-center gap-1.5">
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
               onClick={() => copyToClipboard(formattedBody)}
               className={`btn btn-xs gap-1 rounded-xl transition-all duration-300 ${
                 copied ? 'btn-success shadow-sm shadow-success/20' : 'btn-ghost hover:bg-base-200/80'
@@ -156,8 +154,6 @@ export default function ResponsePanel({ response, loading, tests = [] }) {
               {copied ? 'Copied' : 'Copy'}
             </motion.button>
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
               onClick={() => downloadFile(formattedBody, `response-${Date.now()}.${isJSON ? 'json' : 'txt'}`, isJSON ? 'application/json' : 'text/plain')}
               className="btn btn-ghost btn-xs gap-1 rounded-xl hover:bg-base-200/80"
             >
@@ -199,8 +195,6 @@ export default function ResponsePanel({ response, loading, tests = [] }) {
                 />
               </div>
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
                 onClick={() => setWrapLines(!wrapLines)}
                 className={`btn btn-xs rounded-lg transition-all duration-200 ${wrapLines ? 'btn-secondary shadow-sm shadow-secondary/20' : 'btn-ghost'}`}
               >

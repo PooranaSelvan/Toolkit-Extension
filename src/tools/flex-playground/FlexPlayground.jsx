@@ -343,8 +343,7 @@ function PowerUpBar({ powerUps, onUse, disabled }) {
         return (
           <motion.button
             key={key}
-            whileHover={!disabled && count > 0 ? { scale: 1.08, y: -2 } : {}}
-            whileTap={!disabled && count > 0 ? { scale: 0.95 } : {}}
+            
             onClick={() => count > 0 && !disabled && onUse(key)}
             disabled={disabled || count <= 0}
             className={`relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px] font-bold transition-all duration-200 ${
@@ -399,8 +398,6 @@ function DailyChallengeCard({ daily, isCompleted, onStart }) {
             </div>
           ) : (
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
               onClick={onStart}
               className="btn btn-sm btn-accent gap-1.5"
             >
@@ -465,7 +462,7 @@ function AchievementGallery({ unlockedIds }) {
         return (
           <motion.div
             key={ach.id}
-            whileHover={unlocked ? { scale: 1.03, y: -2 } : {}}
+            
             className={`relative p-4 rounded-xl border text-center transition-all duration-200 ${
               unlocked
                 ? 'border-warning/30 bg-gradient-to-b from-warning/[0.05] to-transparent'
@@ -1906,7 +1903,7 @@ export default function FlexPlayground() {
                       <button
                         onClick={checkChallenge}
                         disabled={challengeResult === 'success' || lives <= 0}
-                        className={`btn btn-sm gap-1.5 ${challengeResult === 'success' ? 'btn-success' : 'btn-primary btn-shimmer'}`}
+                        className={`btn btn-sm gap-1.5 ${challengeResult === 'success' ? 'btn-success' : 'btn-primary'}`}
                       >
                         {challengeResult === 'success' ? (
                           <><CheckCircle2 size={14} /> Solved!</>
@@ -2102,8 +2099,7 @@ export default function FlexPlayground() {
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: idx * 0.08 }}
-                                whileHover={!isLocked ? { scale: 1.02, y: -2 } : {}}
-                                whileTap={!isLocked ? { scale: 0.98 } : {}}
+                                
                                 className={`relative p-4 rounded-xl border cursor-pointer transition-all duration-200 ${
                                   isCompleted
                                     ? 'border-success/30 bg-success/[0.03]'

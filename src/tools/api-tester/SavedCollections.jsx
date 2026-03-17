@@ -12,7 +12,7 @@ export default function SavedCollections({ collections, onLoad, onDelete, onClos
               <FolderOpen size={16} className="text-primary" />
               Saved Collections
             </h3>
-            <motion.button whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.9 }} onClick={onClose} className="btn btn-ghost btn-xs rounded-lg hover:bg-base-200/80">
+            <motion.button onClick={onClose} className="btn btn-ghost btn-xs rounded-lg hover:bg-base-200/80">
               <X size={14} />
             </motion.button>
           </div>
@@ -35,7 +35,7 @@ export default function SavedCollections({ collections, onLoad, onDelete, onClos
             Saved Collections
             <span className="badge badge-ghost badge-xs">{collections.length}</span>
           </h3>
-          <motion.button whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.9 }} onClick={onClose} className="btn btn-ghost btn-xs rounded-lg hover:bg-base-200/80">
+          <motion.button onClick={onClose} className="btn btn-ghost btn-xs rounded-lg hover:bg-base-200/80">
             <X size={14} />
           </motion.button>
         </div>
@@ -47,15 +47,12 @@ export default function SavedCollections({ collections, onLoad, onDelete, onClos
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
-              whileHover={{ scale: 1.02, y: -2 }}
               className="group p-3.5 rounded-xl bg-base-200/60 border border-base-300/50 transition-all duration-200 cursor-pointer hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 backdrop-blur-sm"
               onClick={() => onLoad(item)}
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-semibold">{item.name}</span>
                 <motion.button
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.85 }}
                   onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
                   className="opacity-0 group-hover:opacity-100 transition-opacity btn btn-ghost btn-xs text-error rounded-lg hover:bg-error/10"
                 >

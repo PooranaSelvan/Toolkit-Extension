@@ -82,8 +82,6 @@ export default function BadgeBuilder({ badges = [], onChange }) {
           </h3>
           <div className="flex items-center gap-1.5">
             <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
               onClick={() => setShowPresets(!showPresets)}
               className={`btn btn-xs gap-1.5 rounded-xl transition-all duration-200 ${showPresets ? 'btn-primary shadow-md shadow-primary/20' : 'btn-ghost hover:bg-base-200/80'}`}
             >
@@ -91,8 +89,6 @@ export default function BadgeBuilder({ badges = [], onChange }) {
               Presets
             </motion.button>
             <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
               onClick={addBadge}
               className="btn btn-xs gap-1.5 rounded-xl border border-dashed border-primary/30 hover:border-primary/50 hover:bg-primary/5 text-primary transition-all"
             >
@@ -121,8 +117,6 @@ export default function BadgeBuilder({ badges = [], onChange }) {
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.03 }}
-                      whileHover={{ scale: 1.12 }}
-                      whileTap={{ scale: 0.95 }}
                       onClick={() => addPreset(preset)}
                       className="group relative"
                       title={`Add ${preset.label}: ${preset.text}`}

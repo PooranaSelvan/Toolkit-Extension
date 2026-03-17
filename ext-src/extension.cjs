@@ -345,6 +345,10 @@ function getWebviewContent(webview, extensionUri, initialRoute = '/') {
   // Remove crossorigin from link tags as well
   html = html.replace(/<link([^>]*) crossorigin/g, '<link$1');
 
+  // Determine if the current VS Code theme is dark for FOUC prevention
+  const currentThemeKind = vscode.window.activeColorTheme.kind;
+  const isCurrentDark = currentThemeKind === vscode.ColorThemeKind.Dark || currentThemeKind === vscode.ColorThemeKind.HighContrast;
+
   // Inject meta tags before </head>
   const metaInjection = `
     <meta http-equiv="Content-Security-Policy" content="${csp}">
@@ -352,6 +356,9 @@ function getWebviewContent(webview, extensionUri, initialRoute = '/') {
       window.__VSCODE_API__ = true;
       window.__INITIAL_ROUTE__ = ${JSON.stringify(initialRoute)};
       window.__WEBVIEW_NONCE__ = ${JSON.stringify(nonce)};
+      // Set vscode theme immediately to prevent FOUC — ThemeContext will refine with actual colors
+      document.documentElement.setAttribute('data-theme', 'vscode');
+      document.documentElement.style.colorScheme = ${JSON.stringify(isCurrentDark ? 'dark' : 'light')};
     </script>
   `;
   html = html.replace('</head>', `${metaInjection}\n</head>`);

@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import ScrollToTop from '../components/ScrollToTop';
@@ -8,14 +8,14 @@ import PageProgress from '../components/PageProgress';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 /**
- * Page transition config — kept lightweight to avoid UI lag.
- * `filter: blur()` was removed because it forces the browser to repaint
- * the entire composited layer on every animation frame, causing visible
- * jank especially in VS Code webview where GPU compositing is limited.
+ * Minimal page transition — opacity-only for minimal GPU cost.
+ * Removed AnimatePresence entirely: it was rendering BOTH old and new pages
+ * simultaneously during transitions (mode="sync"), doubling DOM elements
+ * and computation. A simple fade-in on mount is sufficient and much cheaper.
  */
 const pageTransition = {
   type: 'tween',
-  ease: [0.22, 1, 0.36, 1],
+  ease: 'easeOut',
   duration: 0.2,
 };
 
@@ -26,12 +26,8 @@ export default function AppLayout() {
   const prefersReducedMotion = useReducedMotion();
 
   const pageVariants = prefersReducedMotion
-    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
-    : {
-        initial: { opacity: 0, y: 8 },
-        animate: { opacity: 1, y: 0 },
-        exit: { opacity: 0, y: -4 },
-      };
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 } }
+    : { initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 } };
 
   // Close sidebar on route change
   useEffect(() => {
@@ -79,22 +75,16 @@ export default function AppLayout() {
         />
       </div>
 
-      {/* Mobile sidebar overlay */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/30 backdrop-blur-[3px] z-30 lg:hidden"
-            onClick={closeSidebar}
-            aria-label="Close sidebar"
-            role="button"
-            tabIndex={-1}
-          />
-        )}
-      </AnimatePresence>
+      {/* Mobile sidebar overlay — CSS transition, no AnimatePresence overhead */}
+      <div
+        className={`fixed inset-0 bg-black/30 z-30 lg:hidden transition-opacity duration-200 ${
+          sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={closeSidebar}
+        aria-label="Close sidebar"
+        role="button"
+        tabIndex={-1}
+      />
 
       <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
 
@@ -110,27 +100,23 @@ export default function AppLayout() {
           role="main"
         >
           <ScrollToTop />
-          {/* Changed from mode="wait" to default (mode="sync") so the new
-              page renders immediately without waiting for the exit animation
-              to complete. mode="wait" caused a 350ms+ blocking delay where
-              the UI appeared frozen after clicking a sidebar link. */}
-          <AnimatePresence>
-            <motion.div
-              key={location.pathname}
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={pageTransition}
-              className="w-full max-w-full"
-            >
-              {/* Per-route error boundary — prevents a single tool crash
-                  from taking down the entire app shell */}
-              <ErrorBoundary key={location.pathname}>
-                <Outlet />
-              </ErrorBoundary>
-            </motion.div>
-          </AnimatePresence>
+          {/* Simple fade-in on route change — no AnimatePresence.
+              AnimatePresence was rendering both old + new pages simultaneously
+              during transitions, doubling DOM and causing severe jank. */}
+          <motion.div
+            key={location.pathname}
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            transition={pageTransition}
+            className="w-full max-w-full"
+          >
+            {/* Per-route error boundary — prevents a single tool crash
+                from taking down the entire app shell */}
+            <ErrorBoundary key={location.pathname}>
+              <Outlet />
+            </ErrorBoundary>
+          </motion.div>
         </main>
       </div>
     </div>

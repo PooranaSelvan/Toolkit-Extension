@@ -262,10 +262,11 @@ describe('SQL Engine — Core operations', () => {
 });
 
 // ─── Bug #2: Theme auto-detection from VS Code ─────────────
-describe('Bug #2 Fix: Theme auto-detects VS Code theme (no manual selection)', () => {
+describe('Bug #2 Fix: Theme auto-detects exact VS Code theme colors', () => {
 
-  test('ThemeContext uses only two themes: toolbox (light) and toolbox-dark (dark)', () => {
+  test('ThemeContext defines vscode theme alongside light/dark fallbacks', () => {
     const src = readSrc('src/contexts/ThemeContext.jsx');
+    expect(src).toContain("VSCODE_THEME = 'vscode'");
     expect(src).toContain("LIGHT_THEME = 'toolbox'");
     expect(src).toContain("DARK_THEME = 'toolbox-dark'");
   });
@@ -274,7 +275,38 @@ describe('Bug #2 Fix: Theme auto-detects VS Code theme (no manual selection)', (
     const src = readSrc('src/contexts/ThemeContext.jsx');
     expect(src).toContain("postMessage({ type: 'getTheme' })");
     expect(src).toContain("message.type === 'themeInfo'");
-    expect(src).toContain('message.isDark');
+  });
+
+  test('ThemeContext reads --vscode-* CSS variables to generate DaisyUI theme', () => {
+    const src = readSrc('src/contexts/ThemeContext.jsx');
+    expect(src).toContain('--vscode-editor-background');
+    expect(src).toContain('--vscode-editor-foreground');
+    expect(src).toContain('--vscode-button-background');
+    expect(src).toContain('generateVscodeThemeVars');
+  });
+
+  test('ThemeContext converts VS Code colors to oklch for DaisyUI', () => {
+    const src = readSrc('src/contexts/ThemeContext.jsx');
+    expect(src).toContain('rgbToOklch');
+    expect(src).toContain('--color-base-100');
+    expect(src).toContain('--color-primary');
+  });
+
+  test('Extension host sends theme info and listens for theme changes', () => {
+    const src = readSrc('ext-src/extension.cjs');
+    expect(src).toContain('sendThemeToPanel');
+    expect(src).toContain('onDidChangeActiveColorTheme');
+    expect(src).toContain("type: 'themeInfo'");
+  });
+
+  test('CSS has vscode theme definition', () => {
+    const css = readSrc('src/index.css');
+    expect(css).toContain('[data-theme=vscode]');
+  });
+
+  test('Extension host sets data-theme to vscode in webview HTML', () => {
+    const src = readSrc('ext-src/extension.cjs');
+    expect(src).toContain("'data-theme', 'vscode'");
   });
 });
 
@@ -717,6 +749,105 @@ describe('Sidebar Fix: No expensive backdrop-blur on sidebar', () => {
     const src = readSrc('src/layouts/Sidebar.jsx');
     expect(src).toContain('bg-base-100');
     expect(src).not.toContain('backdrop-blur-xl');
+  });
+});
+
+// ─── Box Shadow Generator Fix ───────────────────────────────
+describe('Box Shadow Fix: Preview uses overflow-visible to prevent shadow clipping', () => {
+
+  test('Preview container uses overflow-visible (not overflow-hidden)', () => {
+    const src = readSrc('src/tools/box-shadow/BoxShadowGenerator.jsx');
+    // The main preview section-card should have overflow-visible
+    expect(src).toContain('section-card overflow-visible');
+  });
+
+  test('Preview box does NOT use motion.div with layout prop (avoids animation conflict)', () => {
+    const src = readSrc('src/tools/box-shadow/BoxShadowGenerator.jsx');
+    // The inner preview box (with boxShadow style) should be a plain <div>, not <motion.div layout>
+    // Search for the pattern: motion.div with layout prop combined with boxShadow
+    const previewSectionIdx = src.indexOf('── Preview ──');
+    const previewEnd = src.indexOf('── Tabs ──');
+    const previewBlock = src.substring(previewSectionIdx, previewEnd);
+    // No motion.div with layout prop (which causes Framer Motion to fight CSS transitions)
+    expect(previewBlock).not.toContain('<motion.div\n              layout');
+    expect(previewBlock).not.toContain('<motion.div layout');
+  });
+
+  test('Preview box uses transition-shadow (not transition-all)', () => {
+    const src = readSrc('src/tools/box-shadow/BoxShadowGenerator.jsx');
+    // transition-all causes layout thrash; transition-shadow is specific
+    const previewIdx = src.indexOf('── Preview ──');
+    const previewEnd = src.indexOf('── Tabs ──');
+    const previewBlock = src.substring(previewIdx, previewEnd);
+    expect(previewBlock).toContain('transition-shadow');
+    expect(previewBlock).not.toContain('transition-all');
+  });
+
+  test('CSS section-card.overflow-visible properly overrides hidden overflow', () => {
+    const css = readSrc('src/index.css');
+    expect(css).toContain('.section-card.overflow-visible');
+    expect(css).toContain('overflow: visible !important');
+  });
+
+  test('Preset cards use overflow-visible for shadow preview', () => {
+    const src = readSrc('src/tools/box-shadow/BoxShadowGenerator.jsx');
+    const presetsIdx = src.indexOf('── Presets Tab ──');
+    const presetsEnd = src.indexOf('── Saved Tab ──');
+    const presetsBlock = src.substring(presetsIdx, presetsEnd);
+    expect(presetsBlock).toContain('overflow-visible');
+  });
+
+  test('Saved shadow cards use overflow-visible for shadow preview', () => {
+    const src = readSrc('src/tools/box-shadow/BoxShadowGenerator.jsx');
+    const savedIdx = src.indexOf('── Saved Tab ──');
+    const savedBlock = src.substring(savedIdx);
+    expect(savedBlock).toContain('overflow-visible');
+  });
+
+  test('Hover animation preview uses overflow-visible', () => {
+    const src = readSrc('src/tools/box-shadow/BoxShadowGenerator.jsx');
+    const hoverIdx = src.indexOf('Hover Animation Preview');
+    const hoverEnd = src.indexOf('Code Output');
+    const hoverBlock = src.substring(hoverIdx, hoverEnd);
+    expect(hoverBlock).toContain('overflow-visible');
+  });
+
+  test('Hover animation uses transition-[box-shadow,transform] (not transition-all)', () => {
+    const src = readSrc('src/tools/box-shadow/BoxShadowGenerator.jsx');
+    const hoverIdx = src.indexOf('Hover Animation Preview');
+    const hoverEnd = src.indexOf('Code Output');
+    const hoverBlock = src.substring(hoverIdx, hoverEnd);
+    expect(hoverBlock).toContain('transition-[box-shadow,transform]');
+    expect(hoverBlock).not.toContain('"transition-all');
+  });
+
+  test('Tailwind arbitrary shadow output uses underscore format (not spaces)', () => {
+    const src = readSrc('src/tools/box-shadow/BoxShadowGenerator.jsx');
+    // Tailwind v3+ arbitrary values use underscores for spaces: shadow-[0px_4px_16px_-2px_rgba(0,0,0,0.12)]
+    expect(src).toContain(".replace(/\\s+/g, '_')");
+  });
+
+  test('buildShadowCSS joins with comma-space (no newlines)', () => {
+    const src = readSrc('src/tools/box-shadow/BoxShadowGenerator.jsx');
+    // The join should use ', ' not ',\n    '
+    expect(src).toContain(".join(', ')");
+    expect(src).not.toContain(".join(',\\n");
+  });
+
+  test('No unused imports in BoxShadowGenerator', () => {
+    const src = readSrc('src/tools/box-shadow/BoxShadowGenerator.jsx');
+    expect(src).not.toContain('Move');
+    expect(src).not.toContain('ChevronDown');
+    expect(src).not.toContain('ChevronUp');
+  });
+
+  test('Section card base CSS has overflow:hidden by default', () => {
+    const css = readSrc('src/index.css');
+    // Verify the base section-card sets overflow: hidden
+    const cardIdx = css.indexOf('.section-card {');
+    const cardEnd = css.indexOf('}', cardIdx);
+    const cardBlock = css.substring(cardIdx, cardEnd + 1);
+    expect(cardBlock).toContain('overflow: hidden');
   });
 });
 

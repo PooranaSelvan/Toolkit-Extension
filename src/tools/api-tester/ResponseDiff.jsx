@@ -115,11 +115,11 @@ export default function ResponseDiff({ history, onClose }) {
           </h3>
           <div className="flex items-center gap-1.5">
             {leftId && rightId && (
-              <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => { setLeftId(null); setRightId(null); }} className="btn btn-ghost btn-xs rounded-xl gap-1">
+              <motion.button onClick={() => { setLeftId(null); setRightId(null); }} className="btn btn-ghost btn-xs rounded-xl gap-1">
                 <RotateCcw size={11} /> Reset
               </motion.button>
             )}
-            <motion.button whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.9 }} onClick={onClose} className="btn btn-ghost btn-xs rounded-lg">
+            <motion.button onClick={onClose} className="btn btn-ghost btn-xs rounded-lg">
               <X size={14} />
             </motion.button>
           </div>

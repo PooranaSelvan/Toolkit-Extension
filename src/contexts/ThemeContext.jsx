@@ -1,40 +1,283 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { isVsCodeWebview, postMessage, onMessage } from '../vscodeApi';
 
 /**
  * Theme is now automatically detected from the VS Code editor theme.
- * - Light VS Code themes  → 'toolbox' (light)
- * - Dark VS Code themes   → 'toolbox-dark' (dark)
- * No manual theme selection is exposed to the user.
+ * When running inside VS Code, we use the actual VS Code theme colors
+ * (injected as --vscode-* CSS variables) to derive our DaisyUI theme,
+ * so the extension matches the exact theme the user has active — whether
+ * it's Dracula, Monokai, Solarized, GitHub Dark, One Dark Pro, etc.
  *
- * FOUC prevention: The initial theme is set synchronously on <html> before React
- * hydrates, using the data-theme attribute in index.html. The ThemeProvider then
- * reconciles with the actual VS Code theme as soon as the extension host responds.
+ * Outside VS Code (browser): falls back to toolbox (light) / toolbox-dark.
  */
 
+const VSCODE_THEME = 'vscode';
 const LIGHT_THEME = 'toolbox';
 const DARK_THEME = 'toolbox-dark';
 
 const ThemeContext = createContext(null);
 
 /**
+ * Parse a CSS color string (hex, rgb, rgba) into [r, g, b] (0–255).
+ */
+function parseColor(str) {
+  if (!str) return null;
+  str = str.trim();
+  // hex
+  if (str.startsWith('#')) {
+    let hex = str.slice(1);
+    if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    const n = parseInt(hex, 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  // rgb/rgba
+  const m = str.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/);
+  if (m) return [Math.round(+m[1]), Math.round(+m[2]), Math.round(+m[3])];
+  return null;
+}
+
+/**
+ * Convert sRGB [0–255] to OKLCH string.
+ * Uses the linear sRGB → OKLab → OKLCH pipeline.
+ */
+function rgbToOklch(r, g, b) {
+  // sRGB → linear sRGB
+  const srgbToLinear = (c) => {
+    c = c / 255;
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  const lr = srgbToLinear(r);
+  const lg = srgbToLinear(g);
+  const lb = srgbToLinear(b);
+
+  // linear sRGB → LMS (via OKLab matrix)
+  const l_ = 0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb;
+  const m_ = 0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb;
+  const s_ = 0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb;
+
+  const l1 = Math.cbrt(l_);
+  const m1 = Math.cbrt(m_);
+  const s1 = Math.cbrt(s_);
+
+  // OKLab
+  const L = 0.2104542553 * l1 + 0.7936177850 * m1 - 0.0040720468 * s1;
+  const A = 1.9779984951 * l1 - 2.4285922050 * m1 + 0.4505937099 * s1;
+  const B = 0.0259040371 * l1 + 0.7827717662 * m1 - 0.8086757660 * s1;
+
+  // OKLab → OKLCH
+  const C = Math.sqrt(A * A + B * B);
+  let H = Math.atan2(B, A) * (180 / Math.PI);
+  if (H < 0) H += 360;
+
+  // Format: oklch(L% C H)
+  return `oklch(${(L * 100).toFixed(1)}% ${C.toFixed(3)} ${H.toFixed(0)})`;
+}
+
+/**
+ * Get relative luminance of an RGB color (0–1 scale).
+ */
+function luminance(r, g, b) {
+  const toLinear = (c) => {
+    c = c / 255;
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+}
+
+/**
+ * Choose contrasting content color (white or near-black) for a given background.
+ */
+function contrastContent(bgRgb, isDark) {
+  if (!bgRgb) return isDark ? 'oklch(95% 0 0)' : 'oklch(20% 0 0)';
+  const lum = luminance(...bgRgb);
+  return lum > 0.4 ? 'oklch(20% 0.02 264)' : 'oklch(98% 0 0)';
+}
+
+/**
+ * Lighten or darken an RGB color by a factor.
+ * factor > 1 = lighten, factor < 1 = darken.
+ */
+function adjustBrightness([r, g, b], factor) {
+  if (factor > 1) {
+    // Lighten: mix toward white
+    const t = factor - 1;
+    return [
+      Math.min(255, Math.round(r + (255 - r) * t)),
+      Math.min(255, Math.round(g + (255 - g) * t)),
+      Math.min(255, Math.round(b + (255 - b) * t)),
+    ];
+  }
+  // Darken: multiply
+  return [
+    Math.max(0, Math.round(r * factor)),
+    Math.max(0, Math.round(g * factor)),
+    Math.max(0, Math.round(b * factor)),
+  ];
+}
+
+/**
+ * Read a VS Code CSS variable from the document body (where VS Code injects them).
+ */
+function getVscodeVar(name) {
+  try {
+    return getComputedStyle(document.body).getPropertyValue(name).trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Generate DaisyUI theme CSS variables from VS Code's injected --vscode-* CSS variables.
+ * This maps the actual VS Code theme colors to our DaisyUI theme system.
+ */
+function generateVscodeThemeVars() {
+  // Read key VS Code theme colors
+  const editorBg = getVscodeVar('--vscode-editor-background');
+  const editorFg = getVscodeVar('--vscode-editor-foreground');
+  const sidebarBg = getVscodeVar('--vscode-sideBar-background');
+  const activityBarBg = getVscodeVar('--vscode-activityBar-background');
+  const buttonBg = getVscodeVar('--vscode-button-background');
+  const buttonFg = getVscodeVar('--vscode-button-foreground');
+  const linkFg = getVscodeVar('--vscode-textLink-foreground');
+  const errorFg = getVscodeVar('--vscode-errorForeground');
+  const terminalGreen = getVscodeVar('--vscode-terminal-ansiGreen');
+  const terminalYellow = getVscodeVar('--vscode-terminal-ansiYellow');
+  const terminalBlue = getVscodeVar('--vscode-terminal-ansiBlue');
+  const badgeBg = getVscodeVar('--vscode-badge-background');
+  // Parse colors
+  const bgRgb = parseColor(editorBg);
+  const fgRgb = parseColor(editorFg);
+  const sidebarRgb = parseColor(sidebarBg);
+  const activityRgb = parseColor(activityBarBg);
+  const btnRgb = parseColor(buttonBg);
+  const btnFgRgb = parseColor(buttonFg);
+  const linkRgb = parseColor(linkFg);
+  const errorRgb = parseColor(errorFg);
+  const greenRgb = parseColor(terminalGreen);
+  const yellowRgb = parseColor(terminalYellow);
+  const blueRgb = parseColor(terminalBlue);
+  const badgeRgb = parseColor(badgeBg);
+
+  if (!bgRgb || !fgRgb) return null; // Can't generate without basics
+
+  const isDark = luminance(...bgRgb) < 0.2;
+
+  // ── Map to DaisyUI theme variables ──
+  // base-100: main background (editor background)
+  // base-200: slightly offset (sidebar or between bg and 300)
+  // base-300: borders/dividers
+  // base-content: primary text (editor foreground)
+  const base100 = rgbToOklch(...bgRgb);
+  const base200 = sidebarRgb ? rgbToOklch(...sidebarRgb)
+    : rgbToOklch(...adjustBrightness(bgRgb, isDark ? 1.15 : 0.97));
+  const base300 = activityRgb
+    ? rgbToOklch(...activityRgb)
+    : rgbToOklch(...adjustBrightness(bgRgb, isDark ? 1.35 : 0.90));
+  const baseContent = rgbToOklch(...fgRgb);
+
+  // primary: button background or link color (the "accent" color of the VS Code theme)
+  const primaryRgb = btnRgb || linkRgb || badgeRgb || [45, 121, 255];
+  const primary = rgbToOklch(...primaryRgb);
+  const primaryContent = btnFgRgb ? rgbToOklch(...btnFgRgb) : contrastContent(primaryRgb, isDark);
+
+  // secondary: link color or a hue-shifted variant of primary
+  const secondaryRgb = linkRgb && linkRgb !== btnRgb ? linkRgb : adjustBrightness(primaryRgb, isDark ? 1.2 : 0.85);
+  const secondary = rgbToOklch(...secondaryRgb);
+  const secondaryContent = contrastContent(secondaryRgb, isDark);
+
+  // accent: badge background or a lighter variant
+  const accentRgb = badgeRgb || adjustBrightness(primaryRgb, isDark ? 1.3 : 0.7);
+  const accent = rgbToOklch(...accentRgb);
+  const accentContent = contrastContent(accentRgb, isDark);
+
+  // neutral: darker surface for contrast elements
+  const neutralRgb = activityRgb || adjustBrightness(bgRgb, isDark ? 0.7 : 0.3);
+  const neutral = rgbToOklch(...neutralRgb);
+  const neutralContent = contrastContent(neutralRgb, isDark);
+
+  // info: blue terminal color or link foreground
+  const infoRgb = blueRgb || linkRgb || [59, 130, 246];
+  const info = rgbToOklch(...infoRgb);
+  const infoContent = contrastContent(infoRgb, isDark);
+
+  // success: green terminal color
+  const successRgb = greenRgb || [34, 197, 94];
+  const success = rgbToOklch(...successRgb);
+  const successContent = contrastContent(successRgb, isDark);
+
+  // warning: yellow terminal color
+  const warningRgb = yellowRgb || [234, 179, 8];
+  const warning = rgbToOklch(...warningRgb);
+  const warningContent = contrastContent(warningRgb, isDark);
+
+  // error: error foreground color
+  const errRgb = errorRgb || [239, 68, 68];
+  const error = rgbToOklch(...errRgb);
+  const errorContent = contrastContent(errRgb, isDark);
+
+  return {
+    isDark,
+    vars: {
+      '--color-base-100': base100,
+      '--color-base-200': base200,
+      '--color-base-300': base300,
+      '--color-base-content': baseContent,
+      '--color-primary': primary,
+      '--color-primary-content': primaryContent,
+      '--color-secondary': secondary,
+      '--color-secondary-content': secondaryContent,
+      '--color-accent': accent,
+      '--color-accent-content': accentContent,
+      '--color-neutral': neutral,
+      '--color-neutral-content': neutralContent,
+      '--color-info': info,
+      '--color-info-content': infoContent,
+      '--color-success': success,
+      '--color-success-content': successContent,
+      '--color-warning': warning,
+      '--color-warning-content': warningContent,
+      '--color-error': error,
+      '--color-error-content': errorContent,
+    },
+  };
+}
+
+/**
+ * Apply the generated VS Code theme variables to the document.
+ */
+function applyVscodeTheme() {
+  const result = generateVscodeThemeVars();
+  if (!result) return null;
+
+  const root = document.documentElement;
+  root.setAttribute('data-theme', VSCODE_THEME);
+  root.style.colorScheme = result.isDark ? 'dark' : 'light';
+
+  // Apply each CSS variable to the root element
+  for (const [prop, value] of Object.entries(result.vars)) {
+    root.style.setProperty(prop, value);
+  }
+
+  return result.isDark;
+}
+
+/**
  * Determine the initial theme.
- * In VS Code webview: read the current data-theme from the document (set by index.html or prior render),
- * defaulting to dark if not set — most VS Code users use dark themes.
+ * In VS Code webview: use vscode theme (will be populated once CSS vars are available).
  * Outside VS Code: respect prefers-color-scheme.
  */
 function getInitialTheme() {
+  if (isVsCodeWebview()) {
+    return VSCODE_THEME;
+  }
+
   try {
-    // If a data-theme is already set on the document, use it to avoid FOUC
     const existing = document.documentElement.getAttribute('data-theme');
     if (existing === LIGHT_THEME || existing === DARK_THEME) {
       return existing;
     }
   } catch { /* safe — SSR or test environment */ }
 
-  if (isVsCodeWebview()) {
-    return DARK_THEME; // Safe default; will be corrected immediately by extension host
-  }
   // Browser fallback: use system preference
   try {
     if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: light)').matches) {
@@ -46,22 +289,30 @@ function getInitialTheme() {
 
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(getInitialTheme);
+  const [isDark, setIsDark] = useState(() => {
+    if (isVsCodeWebview()) return true; // Safe default; corrected immediately
+    return getInitialTheme() === DARK_THEME;
+  });
+  const themeAppliedRef = useRef(false);
 
-  // Memoized setter to avoid unnecessary re-renders
+  // Memoized setter for non-vscode themes
   const setTheme = useCallback((newTheme) => {
-    if (newTheme !== LIGHT_THEME && newTheme !== DARK_THEME) return;
+    const valid = [LIGHT_THEME, DARK_THEME, VSCODE_THEME];
+    if (!valid.includes(newTheme)) return;
     setThemeState((prev) => (prev === newTheme ? prev : newTheme));
   }, []);
 
-  // Apply theme to DOM whenever it changes — also set color-scheme for native elements
+  // Apply theme to DOM whenever it changes (for non-vscode themes)
   useEffect(() => {
+    if (theme === VSCODE_THEME) return; // VS Code theme handled separately
     try {
       document.documentElement.setAttribute('data-theme', theme);
       document.documentElement.style.colorScheme = theme === DARK_THEME ? 'dark' : 'light';
+      setIsDark(theme === DARK_THEME);
     } catch { /* safe */ }
   }, [theme]);
 
-  // VS Code theme detection: request theme on mount and listen for changes
+  // VS Code theme detection and application
   useEffect(() => {
     if (!isVsCodeWebview()) {
       // Browser fallback: listen for system color-scheme changes
@@ -76,22 +327,53 @@ export function ThemeProvider({ children }) {
       return;
     }
 
-    // Request the current VS Code theme from the extension host
+    // Apply VS Code theme immediately (CSS vars are already injected by VS Code)
+    const applyTheme = () => {
+      const dark = applyVscodeTheme();
+      if (dark !== null) {
+        setIsDark(dark);
+        themeAppliedRef.current = true;
+      }
+    };
+
+    // Apply now
+    applyTheme();
+
+    // Also request theme from extension host (triggers re-apply on response)
     try {
       postMessage({ type: 'getTheme' });
-    } catch { /* safe — extension host may not be ready */ }
+    } catch { /* safe */ }
 
-    // Listen for theme info messages from the extension host
+    // Listen for theme change messages from the extension host
     const cleanup = onMessage((message) => {
       if (message && message.type === 'themeInfo') {
-        setTheme(message.isDark ? DARK_THEME : LIGHT_THEME);
+        // VS Code has changed theme — re-read CSS variables after a brief delay
+        // to allow VS Code to inject the new --vscode-* variables
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            applyTheme();
+          }, 50);
+        });
       }
     });
 
-    return cleanup;
-  }, [setTheme]);
+    // Also observe VS Code's body class changes (VS Code adds vscode-dark/vscode-light classes)
+    let observer;
+    try {
+      observer = new MutationObserver(() => {
+        applyTheme();
+      });
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'data-vscode-theme-kind'],
+      });
+    } catch { /* safe */ }
 
-  const isDark = theme === DARK_THEME;
+    return () => {
+      cleanup();
+      if (observer) observer.disconnect();
+    };
+  }, [setTheme]);
 
   return (
     <ThemeContext.Provider value={{ theme, isDark }}>

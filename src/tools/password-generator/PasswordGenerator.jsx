@@ -345,7 +345,7 @@ export default function PasswordGenerator() {
               )}
 
               <div className="mt-4 flex items-center gap-2.5 flex-wrap">
-                <button onClick={generate} className="btn btn-primary gap-2.5 btn-shimmer">
+                <button onClick={generate} className="btn btn-primary gap-2.5">
                   <Sparkles size={16} /> Generate
                 </button>
                 <button onClick={generate} className="btn btn-ghost gap-2">

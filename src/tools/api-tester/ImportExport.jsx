@@ -240,7 +240,7 @@ export default function ImportExport({ collections, onSetCollections, history, e
             <FileJson size={16} className="text-primary" />
             Import / Export
           </h3>
-          <motion.button whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.9 }} onClick={onClose} className="btn btn-ghost btn-xs rounded-lg">
+          <motion.button onClick={onClose} className="btn btn-ghost btn-xs rounded-lg">
             <X size={14} />
           </motion.button>
         </div>
@@ -260,8 +260,6 @@ export default function ImportExport({ collections, onSetCollections, history, e
           <div className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <motion.button
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
                 onClick={handleExportNative}
                 disabled={collections.length === 0}
                 className="p-4 rounded-xl bg-base-200/60 border border-base-300/50 hover:border-primary/30 hover:bg-primary/5 transition-all text-left"
@@ -272,8 +270,6 @@ export default function ImportExport({ collections, onSetCollections, history, e
               </motion.button>
 
               <motion.button
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
                 onClick={handleExportCurl}
                 disabled={collections.length === 0}
                 className="p-4 rounded-xl bg-base-200/60 border border-base-300/50 hover:border-primary/30 hover:bg-primary/5 transition-all text-left"
@@ -284,8 +280,6 @@ export default function ImportExport({ collections, onSetCollections, history, e
               </motion.button>
 
               <motion.button
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
                 onClick={handleExportHistory}
                 disabled={history.length === 0}
                 className="p-4 rounded-xl bg-base-200/60 border border-base-300/50 hover:border-primary/30 hover:bg-primary/5 transition-all text-left"
@@ -297,8 +291,6 @@ export default function ImportExport({ collections, onSetCollections, history, e
             </div>
 
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
               onClick={() => {
                 const data = JSON.stringify({ collections, environments }, null, 2);
                 copyToClipboard(data);
@@ -322,8 +314,6 @@ export default function ImportExport({ collections, onSetCollections, history, e
             </div>
 
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
               onClick={handleImportFile}
               className="btn btn-primary btn-sm w-full gap-1.5 rounded-xl"
             >
@@ -342,8 +332,6 @@ export default function ImportExport({ collections, onSetCollections, history, e
             />
 
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
               onClick={handleImportFromText}
               disabled={!importText.trim()}
               className="btn btn-secondary btn-sm w-full gap-1.5 rounded-xl"

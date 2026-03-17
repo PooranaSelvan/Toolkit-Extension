@@ -55,8 +55,6 @@ function MarkdownToolbar({ textareaId, value, onChange }) {
           <motion.button
             key={i}
             type="button"
-            whileHover={{ scale: 1.15 }}
-            whileTap={{ scale: 0.9 }}
             onClick={tool.action}
             title={tool.title}
             className="btn btn-ghost btn-xs h-7 w-7 p-0 min-h-0 text-base-content/60 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
@@ -351,8 +349,6 @@ function StepNav({ steps, activeStep, onStepChange, filledMap }) {
             key={step.id}
             type="button"
             onClick={() => onStepChange(idx)}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
             className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 whitespace-nowrap shrink-0 overflow-hidden ${
               isActive
                 ? 'bg-primary text-primary-content shadow-lg shadow-primary/30'
@@ -387,10 +383,7 @@ function StepNav({ steps, activeStep, onStepChange, filledMap }) {
               <span className="text-[10px] font-mono text-base-content/60 tabular-nums bg-base-200/80 px-1.5 py-0.5 rounded-md">{filledCount}/{step.fields.length}</span>
             )}
 
-            {/* Active shimmer sweep */}
-            {isActive && (
-              <div className="absolute inset-0 shimmer-sweep pointer-events-none" />
-            )}
+            
           </motion.button>
         );
       })}
@@ -847,8 +840,6 @@ export default function ReadmeForm({ formData, onChange }) {
               type="button"
               onClick={goPrev}
               disabled={activeStep === 0}
-              whileHover={{ x: -2 }}
-              whileTap={{ scale: 0.95 }}
               className="btn btn-ghost btn-sm gap-1.5 disabled:opacity-30 rounded-xl hover:bg-base-200/80"
             >
               <ChevronLeft size={14} />
@@ -862,8 +853,6 @@ export default function ReadmeForm({ formData, onChange }) {
                   key={idx}
                   type="button"
                   onClick={() => goToStep(idx)}
-                  whileHover={{ scale: 1.3 }}
-                  whileTap={{ scale: 0.8 }}
                   className={`transition-all duration-400 rounded-full ${
                     idx === activeStep
                       ? 'w-7 h-2.5 bg-primary shadow-md shadow-primary/30'

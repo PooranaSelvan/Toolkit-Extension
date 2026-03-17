@@ -176,13 +176,13 @@ export default function EnvironmentManager({
             <span className="badge badge-ghost badge-xs">{envs.length}</span>
           </h3>
           <div className="flex items-center gap-1.5">
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleImportEnvironments} className="btn btn-ghost btn-xs gap-1 rounded-xl" title="Import">
+            <motion.button onClick={handleImportEnvironments} className="btn btn-ghost btn-xs gap-1 rounded-xl" title="Import">
               <Upload size={12} /> Import
             </motion.button>
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleExportEnvironments} className="btn btn-ghost btn-xs gap-1 rounded-xl" title="Export">
+            <motion.button onClick={handleExportEnvironments} className="btn btn-ghost btn-xs gap-1 rounded-xl" title="Export">
               <Download size={12} /> Export
             </motion.button>
-            <motion.button whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.9 }} onClick={onClose} className="btn btn-ghost btn-xs rounded-lg">
+            <motion.button onClick={onClose} className="btn btn-ghost btn-xs rounded-lg">
               <X size={14} />
             </motion.button>
           </div>
@@ -193,8 +193,6 @@ export default function EnvironmentManager({
           <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-2 block">Active Environment</label>
           <div className="flex flex-wrap gap-2">
             <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
               onClick={() => onSetActiveEnv(null)}
               className={`btn btn-xs rounded-xl ${!activeEnvId ? 'btn-primary' : 'btn-ghost'}`}
             >
@@ -203,8 +201,6 @@ export default function EnvironmentManager({
             {envs.map((env) => (
               <motion.button
                 key={env.id}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
                 onClick={() => onSetActiveEnv(env.id)}
                 className={`btn btn-xs rounded-xl gap-1.5 ${activeEnvId === env.id ? 'btn-primary shadow-md' : 'btn-ghost'}`}
               >
@@ -221,7 +217,7 @@ export default function EnvironmentManager({
           {envs.length === 0 && (
             <div className="text-center py-8">
               <p className="text-sm opacity-50 mb-3">No environments configured.</p>
-              <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={handleLoadDefaults} className="btn btn-primary btn-sm rounded-xl gap-1.5">
+              <motion.button onClick={handleLoadDefaults} className="btn btn-primary btn-sm rounded-xl gap-1.5">
                 <Plus size={14} /> Load Defaults
               </motion.button>
             </div>
@@ -341,8 +337,6 @@ export default function EnvironmentManager({
                         </div>
                       ))}
                       <motion.button
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
                         onClick={() => handleAddVariable(env.id)}
                         className="btn btn-ghost btn-xs gap-1.5 text-primary rounded-xl hover:bg-primary/10 border border-dashed border-primary/20"
                       >
@@ -358,8 +352,6 @@ export default function EnvironmentManager({
 
         {/* Add Environment Button */}
         <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
           onClick={handleAddEnvironment}
           className="btn btn-ghost btn-sm gap-1.5 text-primary rounded-xl hover:bg-primary/10 border border-dashed border-primary/20 w-full mt-4"
         >

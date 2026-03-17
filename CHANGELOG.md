@@ -5,6 +5,20 @@ All notable changes to the **WebToolKit Toolbox** (Developer Toolbox) extension 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.5] - 2025-07-19
+
+### Removed
+- **MIT License** — Removed the MIT license file (`LICENSE`) from the project entirely
+- Removed `"license": "MIT"` field from `package.json`
+- Removed license badge from `README.md`
+- Removed "License" section from `README.md` footer (replaced with "Author" section)
+
+### Changed
+- Version bumped to `1.5.5` across `package.json`, `README.md`, and `CHANGELOG.md`
+- Updated `README.md` release notes with `1.5.5` entry
+
+---
+
 ## [1.5.2] - 2025-07-18
 
 ### Removed

@@ -40,8 +40,6 @@ export default function CustomSections({ sections = [], onChange }) {
             )}
           </h3>
           <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
             onClick={addSection}
             className="btn btn-xs gap-1.5 rounded-xl border border-dashed border-primary/30 hover:border-primary/50 hover:bg-primary/5 text-primary transition-all"
           >

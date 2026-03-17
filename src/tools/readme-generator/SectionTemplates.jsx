@@ -352,8 +352,6 @@ export default function SectionTemplates({ onApply, formData }) {
                                 <p className="text-[10px] text-base-content/60">{tmpl.description}</p>
                               </div>
                               <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
                                 onClick={() => handleApply(tmpl)}
                                 className={`btn btn-xs gap-1 rounded-lg shrink-0 transition-all ${
                                   appliedId === tmpl.id

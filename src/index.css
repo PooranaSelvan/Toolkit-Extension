@@ -68,6 +68,25 @@
   --noise: 0;
 }
 
+/* ═══ VS Code Native Theme ═══
+   When running inside VS Code, theme variables are dynamically generated
+   from --vscode-* CSS variables by ThemeContext.jsx. This base definition
+   provides sane defaults and structural tokens. The actual color values
+   are overridden inline on <html> by the ThemeProvider. */
+[data-theme=vscode] {
+  /* Color values are set dynamically via JS from VS Code's --vscode-* variables.
+     These fallback values match toolbox-dark and are immediately overridden. */
+  color-scheme: dark;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
 /* ─── Scrollbar ─── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -275,21 +294,7 @@ body {
   isolation: isolate;
 }
 
-/* Ripple effect for all buttons */
-.btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(255,255,255,0.15) 0%, transparent 60%);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  pointer-events: none;
-  z-index: -1;
-}
-.btn:active::after {
-  opacity: 1;
-  transition: opacity 0s;
-}
+
 
 .btn-primary {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -631,46 +636,37 @@ body {
   border-bottom-right-radius: 0.5rem;
 }
 
-/* ═══ Glass & Effects ═══ */
+/* ═══ Glass & Effects — backdrop-filter removed for performance ═══
+   backdrop-filter creates a separate compositing layer for EACH element
+   and forces the GPU to blur the underlying content on every repaint.
+   Using solid/semi-transparent backgrounds instead. */
 .glass-card {
-  background: color-mix(in oklch, var(--color-base-100) 80%, transparent);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: color-mix(in oklch, var(--color-base-100) 95%, transparent);
   border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
 }
 .glass-highlight {
   box-shadow:
     0 1px 3px color-mix(in oklch, var(--color-base-content) 4%, transparent),
-    0 4px 16px color-mix(in oklch, var(--color-base-content) 2%, transparent),
-    inset 0 1px 0 color-mix(in oklch, var(--color-base-content) 4%, transparent);
+    0 4px 16px color-mix(in oklch, var(--color-base-content) 2%, transparent);
 }
 .glass-base {
-  background: color-mix(in oklch, var(--color-base-200) 60%, transparent);
-  backdrop-filter: blur(12px) saturate(160%);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  background: color-mix(in oklch, var(--color-base-200) 90%, transparent);
   border: 1px solid color-mix(in oklch, var(--color-base-content) 6%, transparent);
   border-radius: 0.75rem;
 }
 .glass-sidebar {
-  background: color-mix(in oklch, var(--color-base-100) 92%, transparent);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  background: color-mix(in oklch, var(--color-base-100) 98%, transparent);
 }
 .glass-header {
-  background: color-mix(in oklch, var(--color-base-100) 78%, transparent);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  background: color-mix(in oklch, var(--color-base-100) 95%, transparent);
 }
-/* Premium elevated glass variant */
+/* Elevated glass variant — no blur */
 .glass-elevated {
-  background: color-mix(in oklch, var(--color-base-100) 88%, transparent);
-  backdrop-filter: blur(32px) saturate(200%);
-  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  background: color-mix(in oklch, var(--color-base-100) 96%, transparent);
   border: 1px solid color-mix(in oklch, var(--color-base-content) 10%, transparent);
   box-shadow:
     0 2px 4px color-mix(in oklch, var(--color-base-content) 3%, transparent),
-    0 8px 24px -4px color-mix(in oklch, var(--color-base-content) 6%, transparent),
-    inset 0 1px 0 color-mix(in oklch, var(--color-base-content) 5%, transparent);
+    0 8px 24px -4px color-mix(in oklch, var(--color-base-content) 6%, transparent);
 }
 
 /* ═══ Gradient text ═══ */
@@ -705,23 +701,18 @@ body {
   -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, black 30%, transparent 100%);
 }
 
-/* ═══ Frosted stat card ═══ */
+/* ═══ Stat card — removed backdrop-filter for performance ═══ */
 .stat-card-frost {
-  background: color-mix(in oklch, var(--color-base-100) 70%, transparent);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: color-mix(in oklch, var(--color-base-100) 92%, transparent);
   border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
   box-shadow:
-    0 1px 3px color-mix(in oklch, var(--color-base-content) 3%, transparent),
-    inset 0 1px 0 color-mix(in oklch, var(--color-base-content) 4%, transparent);
-  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    0 1px 3px color-mix(in oklch, var(--color-base-content) 3%, transparent);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .stat-card-frost:hover {
   border-color: color-mix(in oklch, var(--color-primary) 20%, transparent);
   box-shadow:
-    0 4px 16px color-mix(in oklch, var(--color-primary) 8%, transparent),
-    0 8px 32px -8px color-mix(in oklch, var(--color-primary) 6%, transparent),
-    inset 0 1px 0 color-mix(in oklch, var(--color-primary) 8%, transparent);
+    0 4px 16px color-mix(in oklch, var(--color-primary) 8%, transparent);
 }
 
 /* ═══ Marquee-style category pill track ═══ */
@@ -790,7 +781,7 @@ body {
   /* intentionally static */
 }
 
-/* ═══ Sidebar brand shimmer ═══ */
+/* ═══ Sidebar brand shimmer — animation only on hover ═══ */
 .brand-logo-ring {
   position: relative;
 }
@@ -809,11 +800,12 @@ body {
   );
   opacity: 0;
   z-index: -1;
-  transition: opacity 0.4s ease;
-  animation: brand-ring-spin 4s linear infinite;
+  transition: opacity 0.3s ease;
+  /* Animation only plays on hover, not infinitely */
 }
 .brand-logo-ring:hover::after {
   opacity: 1;
+  animation: brand-ring-spin 4s linear infinite;
 }
 @keyframes brand-ring-spin {
   to { transform: rotate(360deg); }
@@ -1063,38 +1055,36 @@ html.sidebar-body-lock {
   height: 1px;
   background-color: color-mix(in oklch, var(--color-base-content) 10%, transparent);
 }
-/* ═══ shadcn-style section card — Glassmorphic ═══ */
+/* ═══ Section card — removed backdrop-filter for performance ═══ */
 .section-card {
   @apply rounded-xl border;
   position: relative;
-  background: color-mix(in oklch, var(--color-base-100) 95%, transparent);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  overflow: hidden;
+  background: color-mix(in oklch, var(--color-base-100) 98%, transparent);
   border-color: color-mix(in oklch, var(--color-base-content) 10%, transparent);
   box-shadow: 
     0 1px 2px 0 color-mix(in oklch, var(--color-base-content) 3%, transparent),
-    0 4px 12px -2px color-mix(in oklch, var(--color-base-content) 2%, transparent),
-    0 0 0 1px color-mix(in oklch, var(--color-base-content) 2%, transparent) inset;
-  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    0 4px 12px -2px color-mix(in oklch, var(--color-base-content) 2%, transparent);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .section-card:hover {
   box-shadow: 
     0 2px 4px 0 color-mix(in oklch, var(--color-base-content) 4%, transparent),
-    0 10px 24px -4px color-mix(in oklch, var(--color-base-content) 5%, transparent),
-    0 0 0 1px color-mix(in oklch, var(--color-primary) 10%, transparent) inset;
+    0 10px 24px -4px color-mix(in oklch, var(--color-base-content) 5%, transparent);
   border-color: color-mix(in oklch, var(--color-primary) 18%, transparent);
-  transform: translateY(-1px);
+}
+/* Allow opt-out: when a section-card explicitly needs visible overflow (e.g. shadow previews) */
+.section-card.overflow-visible {
+  overflow: visible !important;
 }
 /* ═══ Subtle ring on focused card ═══ */
 .focus-ring:focus-within {
   box-shadow: 0 0 0 2px var(--color-base-100), 0 0 0 4px color-mix(in oklch, var(--color-primary) 25%, transparent);
 }
 
-/* ═══ Frosted glass panels ═══ */
+/* ═══ Glass panels — no backdrop-filter ═══ */
 .glass-panel {
-  background: color-mix(in oklch, var(--color-base-100) 85%, transparent);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background: color-mix(in oklch, var(--color-base-100) 96%, transparent);
   border: 1px solid color-mix(in oklch, var(--color-base-content) 6%, transparent);
 }
 
@@ -1323,8 +1313,7 @@ main::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--colo
   padding-right: 2rem;
 }
 
-/* Gradient primary button — attractive two-tone primary.
-   Uses background-image (not shorthand) so it can layer with btn-shimmer. */
+/* Gradient primary button — attractive two-tone primary. */
 .btn-gradient-primary {
   background-color: var(--color-primary);
   background-image: linear-gradient(
@@ -1343,82 +1332,23 @@ main::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--colo
   );
 }
 
-/* Gradient shimmer on primary CTA buttons.
-   When combined with btn-gradient-primary, layers the shimmer ON TOP of the gradient
-   using CSS multiple background-image stacking. */
-@keyframes btn-shimmer {
-  0% { background-position: -200% 0, 0 0; }
-  100% { background-position: 200% 0, 0 0; }
-}
-.btn-shimmer {
-  background-size: 200% 100%, 100% 100%;
-  animation: btn-shimmer 3s ease-in-out infinite;
-}
-.btn-gradient-primary.btn-shimmer {
-  background-image:
-    linear-gradient(
-      110deg,
-      transparent 0%,
-      transparent 40%,
-      rgba(255, 255, 255, 0.12) 50%,
-      transparent 60%,
-      transparent 100%
-    ),
-    linear-gradient(
-      135deg,
-      var(--color-primary) 0%,
-      color-mix(in oklch, var(--color-primary) 82%, var(--color-secondary, var(--color-primary))) 100%
-    );
-}
-.btn-gradient-primary.btn-shimmer:hover {
-  background-image:
-    linear-gradient(
-      110deg,
-      transparent 0%,
-      transparent 40%,
-      rgba(255, 255, 255, 0.15) 50%,
-      transparent 60%,
-      transparent 100%
-    ),
-    linear-gradient(
-      135deg,
-      color-mix(in oklch, var(--color-primary) 92%, white) 0%,
-      color-mix(in oklch, var(--color-primary) 75%, var(--color-secondary, var(--color-primary))) 100%
-    );
-}
-/* Standalone btn-shimmer (without gradient-primary) — just the shimmer overlay */
-.btn-shimmer:not(.btn-gradient-primary) {
-  background-image: linear-gradient(
-    110deg,
-    transparent 0%,
-    transparent 40%,
-    rgba(255, 255, 255, 0.12) 50%,
-    transparent 60%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-}
 
-/* ═══ Enhanced Section Card with subtle gradient border ═══ */
+
+/* ═══ Section Card elevated — no backdrop-filter ═══ */
 .section-card-elevated {
   @apply rounded-xl border;
-  background: color-mix(in oklch, var(--color-base-100) 97%, transparent);
-  backdrop-filter: blur(20px) saturate(200%);
-  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  background: color-mix(in oklch, var(--color-base-100) 99%, transparent);
   border-color: color-mix(in oklch, var(--color-base-content) 10%, transparent);
   box-shadow: 
     0 1px 3px 0 color-mix(in oklch, var(--color-base-content) 4%, transparent),
-    0 6px 20px -4px color-mix(in oklch, var(--color-base-content) 3%, transparent),
-    0 0 0 1px color-mix(in oklch, var(--color-base-content) 2%, transparent) inset;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    0 6px 20px -4px color-mix(in oklch, var(--color-base-content) 3%, transparent);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .section-card-elevated:hover {
   box-shadow: 
     0 2px 6px 0 color-mix(in oklch, var(--color-base-content) 5%, transparent),
-    0 12px 32px -6px color-mix(in oklch, var(--color-base-content) 5%, transparent),
-    0 0 0 1px color-mix(in oklch, var(--color-primary) 10%, transparent) inset;
+    0 12px 32px -6px color-mix(in oklch, var(--color-base-content) 5%, transparent);
   border-color: color-mix(in oklch, var(--color-primary) 18%, transparent);
-  transform: translateY(-1px);
 }
 
 /* ═══ Glow ring for icon badges ═══ */
@@ -1451,34 +1381,11 @@ main::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--colo
   transform: translateY(0px) scale(0.98);
 }
 
-/* ═══ Card shine sweep effect ═══ */
+/* ═══ Card shine sweep — disabled for performance ═══
+   The ::before pseudo-element + animation on every card hover triggers
+   a paint for the entire card area. Disabled to reduce jank. */
 .card-shine {
-  position: relative;
-  overflow: hidden;
-}
-.card-shine::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 60%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in oklch, var(--color-base-content) 4%, transparent),
-    transparent
-  );
-  transition: none;
-  pointer-events: none;
-  z-index: 1;
-}
-.card-shine:hover::before {
-  animation: shine-sweep 0.8s ease-in-out;
-}
-@keyframes shine-sweep {
-  0% { left: -100%; }
-  100% { left: 200%; }
+  /* intentionally empty — class kept for backwards compatibility */
 }
 
 /* ═══ Staggered entrance animation ═══ */
@@ -1503,37 +1410,12 @@ main::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--colo
   0% { width: 100%; }
   100% { width: 0%; }
 }
-
-/* ═══ Animated gradient border on hover ═══ */
+/* ═══ Gradient border hover — disabled for performance ═══
+   The mask-composite + infinite animation on every card hover was extremely
+   expensive (compositing + repaint per frame). Disabled. */
 .gradient-border-hover {
-  position: relative;
-}
-.gradient-border-hover::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary, var(--color-primary)), var(--color-primary));
-  background-size: 200% 200%;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-.gradient-border-hover:hover::after {
-  opacity: 1;
-  animation: gradient-border-spin 3s ease infinite;
-}
-@keyframes gradient-border-spin {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* ═══ Ambient background blobs ═══ */
+  /* intentionally empty */
+}/* ═══ Ambient background blobs ═══ */
 .ambient-blob {
   position: absolute;
   border-radius: 50%;
@@ -1608,13 +1490,13 @@ img[data-lazy-managed].loaded {
   opacity: 1;
 }
 
-/* Glow pulse for loading states */
+/* Glow pulse — reduced to subtle opacity-only to avoid layout-triggering scale */
 @keyframes glow-pulse {
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.05); }
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
 }
 .animate-glow-pulse {
-  animation: glow-pulse 2s ease-in-out infinite;
+  animation: glow-pulse 3s ease-in-out infinite;
 }
 
 /* ═══ Tooltip styles ═══ */
@@ -1683,20 +1565,9 @@ img[data-lazy-managed].loaded {
   pointer-events: none;
 }
 
-/* ═══ Smooth color theme transitions ═══ */
-/* Apply theme transitions only to layout containers — avoid blanket * rules
-   that override component-level transitions and hurt performance. */
-body,
-.bg-base-100,
-.bg-base-200,
-.bg-base-300,
-.bg-primary,
-.border-base-300,
-.text-base-content,
-.text-primary {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 200ms;
+/* ═══ Theme transitions — only on body to avoid per-element overhead ═══ */
+body {
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* ═══ Focus trap outline for modals ═══ */
@@ -1855,18 +1726,5 @@ main p, main li, main span, main td, main th {
   animation: pulse-soft 2s ease-in-out infinite;
 }
 
-/* ═══ Missing animation: shimmer-sweep for active step nav ═══ */
-@keyframes shimmer-sweep {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-.shimmer-sweep {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.12) 50%,
-    transparent 100%
-  );
-  animation: shimmer-sweep 2.5s ease-in-out infinite;
-}
+
 

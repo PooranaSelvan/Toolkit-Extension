@@ -2,9 +2,8 @@
   "name": "developer-toolbox",
   "displayName": "WebToolKit Toolbox",
   "description": "All-in-one developer utilities — 17+ tools including API Tester, JSON Formatter, Color Palette, Regex Generator, JWT Decoder, SQL Playground, and more. All running directly inside VS Code.",
-  "version": "1.5.2",
+  "version": "1.5.7",
   "publisher": "developer-toolbox",
-  "license": "MIT",
   "icon": "assets/icon.png",
   "repository": {
     "type": "git",

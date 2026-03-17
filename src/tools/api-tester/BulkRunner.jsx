@@ -135,7 +135,7 @@ export default function BulkRunner({ collections, resolveEnvVars, onClose, onLoa
             Bulk Runner
             <span className="badge badge-ghost badge-xs">{collections.length} requests</span>
           </h3>
-          <motion.button whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.9 }} onClick={onClose} className="btn btn-ghost btn-xs rounded-lg">
+          <motion.button onClick={onClose} className="btn btn-ghost btn-xs rounded-lg">
             <X size={14} />
           </motion.button>
         </div>
@@ -164,18 +164,16 @@ export default function BulkRunner({ collections, resolveEnvVars, onClose, onLoa
           </label>
           <div className="ml-auto flex gap-1.5">
             {results.length > 0 && (
-              <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={handleReset} className="btn btn-ghost btn-xs rounded-xl gap-1">
+              <motion.button onClick={handleReset} className="btn btn-ghost btn-xs rounded-xl gap-1">
                 <RotateCcw size={11} /> Reset
               </motion.button>
             )}
             {running ? (
-              <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={handleAbort} className="btn btn-error btn-xs rounded-xl gap-1">
+              <motion.button onClick={handleAbort} className="btn btn-error btn-xs rounded-xl gap-1">
                 <SkipForward size={11} /> Abort
               </motion.button>
             ) : (
               <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
                 onClick={handleRun}
                 disabled={selected.size === 0}
                 className="btn btn-primary btn-xs rounded-xl gap-1"

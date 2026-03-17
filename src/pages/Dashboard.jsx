@@ -9,17 +9,18 @@ import { getTools, CATEGORIES, getToolsByCategory, searchTools } from '../utils/
 import { isVsCodeWebview, openExternal } from '../vscodeApi';
 import SEO from '../components/SEO';
 
+/* Reduced stagger + removed scale (causes layout recalc on every card) */
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.04, delayChildren: 0.05 },
+    transition: { staggerChildren: 0.02, delayChildren: 0.03 },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 16, scale: 0.97 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } },
 };
 
 const RECENT_TOOLS_KEY = 'devtoolbox-recent-tools';
@@ -286,12 +287,9 @@ export default function Dashboard() {
                     } catch {}
                   }}
                 >
-                  <div className="h-full rounded-2xl border border-base-300/40 bg-base-100 p-5 transition-all duration-300 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/[0.08] hover:-translate-y-2 card-shine gradient-border-hover relative overflow-hidden">
-                    {/* Subtle corner gradient on hover */}
-                    <div className="absolute top-0 right-0 w-20 h-20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" 
-                         style={{ background: 'radial-gradient(circle at 100% 0%, color-mix(in oklch, var(--color-primary) 6%, transparent), transparent 70%)' }} />
-                    <div className="flex items-start gap-3.5 relative">
-                      <div className="w-12 h-12 rounded-xl bg-primary/[0.06] flex items-center justify-center shrink-0 text-primary transition-all duration-300 group-hover:bg-primary/[0.12] group-hover:scale-110 group-hover:shadow-md group-hover:shadow-primary/10 group-hover:rotate-[-3deg]">
+                  <div className="h-full rounded-2xl border border-base-300/40 bg-base-100 p-5 transition-all duration-200 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/[0.06] hover:-translate-y-1 relative overflow-hidden">
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-12 h-12 rounded-xl bg-primary/[0.06] flex items-center justify-center shrink-0 text-primary transition-all duration-200 group-hover:bg-primary/[0.12] group-hover:scale-105">
                         <Icon size={22} strokeWidth={1.8} />
                       </div>
                       <div className="flex-1 min-w-0 pt-0.5">
@@ -302,7 +300,7 @@ export default function Dashboard() {
                           <ArrowRight
                             size={14}
                             strokeWidth={2.5}
-                            className="shrink-0 opacity-0 transition-all duration-200 group-hover:opacity-50 group-hover:translate-x-1 text-primary"
+                            className="shrink-0 opacity-0 transition-opacity duration-200 group-hover:opacity-50 text-primary"
                           />
                         </div>
                         <p className="text-xs text-base-content/50 leading-relaxed line-clamp-2">

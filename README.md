@@ -5,8 +5,7 @@
 No browser needed. No sign-ups. No data collection. Everything runs client-side inside a VS Code webview panel.
 
 [![VS Code](https://img.shields.io/badge/VS%20Code-v1.51%2B-blue?logo=visualstudiocode)](https://code.visualstudio.com/)
-[![Version](https://img.shields.io/badge/version-1.5.2-brightgreen)](./CHANGELOG.md)
-[![License](https://img.shields.io/badge/license-MIT-yellow)](./LICENSE)
+[![Version](https://img.shields.io/badge/version-1.5.5-brightgreen)](./CHANGELOG.md)
 
 ---
 
@@ -123,7 +122,12 @@ See the [GitHub Issues](https://github.com/PooranaSelvan/Toolkit-Extension/issue
 
 See [CHANGELOG.md](./CHANGELOG.md) for the full release history.
 
-### 1.5.2 (Latest)
+### 1.5.5 (Latest)
+- Removed MIT license from the project
+- Updated version to 1.5.5 across all project files
+- Updated CHANGELOG and README documentation
+
+### 1.5.2
 - Removed **Frontend Playground** tool entirely — reduced bundle size by removing CodeMirror 6 and all associated dependencies
 - Updated tool counts, documentation, extension sidebar, and QuickPick items
 
@@ -180,6 +184,6 @@ See [CHANGELOG.md](./CHANGELOG.md) for the full release history.
 
 ---
 
-## 📄 License
+## 👤 Author
 
-MIT — Built by [Poorana Selvan](https://github.com/PooranaSelvan)
+Built by [Poorana Selvan](https://github.com/PooranaSelvan)

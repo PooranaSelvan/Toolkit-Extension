@@ -31,7 +31,7 @@ export default function Header({ onMenuToggle, isSidebarOpen = false }) {
   return (
     <header
       role="banner"
-      className="h-14 sm:h-16 bg-base-100/80 backdrop-blur-xl border-b border-base-300/25 flex items-center justify-between px-3 sm:px-6 lg:px-8 sticky top-0 z-20 shadow-[0_1px_4px_-1px_rgba(0,0,0,0.05),0_2px_8px_-2px_rgba(0,0,0,0.02)] relative shrink-0 w-full max-w-full"
+      className="h-14 sm:h-16 bg-base-100 border-b border-base-300/25 flex items-center justify-between px-3 sm:px-6 lg:px-8 sticky top-0 z-20 shadow-[0_1px_4px_-1px_rgba(0,0,0,0.05)] relative shrink-0 w-full max-w-full"
     >
       {/* Animated gradient accent line at bottom */}
       <div className="header-accent-line" />

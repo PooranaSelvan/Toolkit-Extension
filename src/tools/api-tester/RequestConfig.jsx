@@ -99,8 +99,6 @@ export default function RequestConfig({ request, onUpdate, tests = [], onSetTest
             className={`input input-sm font-mono text-xs flex-1 rounded-xl bg-base-100/80 backdrop-blur-sm transition-all duration-200 focus:ring-1 focus:ring-primary/10 ${!row.enabled ? 'opacity-40' : ''}`}
           />
           <motion.button
-            whileHover={{ scale: 1.2 }}
-            whileTap={{ scale: 0.85 }}
             onClick={() => handleRemoveRow(field, row.id)}
             className="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 text-error shrink-0 rounded-lg hover:bg-error/10"
             title="Remove"
@@ -117,8 +115,6 @@ export default function RequestConfig({ request, onUpdate, tests = [], onSetTest
       )}
 
       <motion.button
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.97 }}
         onClick={() => handleAddRow(field)}
         className="btn btn-ghost btn-xs gap-1.5 text-primary mt-2 rounded-xl hover:bg-primary/10 border border-dashed border-primary/20 hover:border-primary/40 transition-all"
       >
@@ -142,8 +138,6 @@ export default function RequestConfig({ request, onUpdate, tests = [], onSetTest
           ].map(({ key, label, icon: Icon }) => (
             <motion.button
               key={key}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
               onClick={() => onUpdate('auth', { ...request.auth, type: key })}
               className={`btn btn-sm gap-1.5 rounded-xl transition-all duration-200 ${
                 request.auth.type === key
@@ -286,8 +280,6 @@ export default function RequestConfig({ request, onUpdate, tests = [], onSetTest
                   {BODY_TYPES.map(({ key, label }) => (
                     <motion.button
                       key={key}
-                      whileHover={{ scale: 1.04 }}
-                      whileTap={{ scale: 0.96 }}
                       onClick={() => onUpdate('bodyType', key)}
                       className={`btn btn-xs rounded-lg transition-all duration-200 ${
                         request.bodyType === key ? 'btn-primary shadow-sm shadow-primary/20' : 'btn-ghost'

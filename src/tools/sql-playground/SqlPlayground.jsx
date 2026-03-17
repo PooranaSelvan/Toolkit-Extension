@@ -366,8 +366,7 @@ function SqlPowerUpBar({ powerUps, onUse, disabled }) {
         return (
           <motion.button
             key={key}
-            whileHover={!disabled && count > 0 ? { scale: 1.08, y: -2 } : {}}
-            whileTap={!disabled && count > 0 ? { scale: 0.95 } : {}}
+            
             onClick={() => count > 0 && !disabled && onUse(key)}
             disabled={disabled || count <= 0}
             className={`relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px] font-bold transition-all duration-200 ${
@@ -415,7 +414,7 @@ function SqlDailyChallengeCard({ daily, isCompleted, onStart }) {
               <span className="text-[10px] font-bold text-success">Completed!</span>
             </div>
           ) : (
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={onStart} className="btn btn-sm btn-accent gap-1.5">
+            <motion.button onClick={onStart} className="btn btn-sm btn-accent gap-1.5">
               <Zap size={13} /> Play Now
             </motion.button>
           )}
@@ -467,7 +466,7 @@ function SqlAchievementGallery({ unlockedIds }) {
         return (
           <motion.div
             key={ach.id}
-            whileHover={unlocked ? { scale: 1.03, y: -2 } : {}}
+            
             className={`relative p-4 rounded-xl border text-center transition-all duration-200 ${
               unlocked
                 ? 'border-warning/30 bg-gradient-to-b from-warning/[0.05] to-transparent'
@@ -1795,7 +1794,7 @@ export default function SqlPlayground() {
                             <button
                               onClick={runChallengeQuery}
                               disabled={challengeVerdict === 'success' || sqlLives <= 0}
-                              className={`btn btn-sm gap-1.5 ${challengeVerdict === 'success' ? 'btn-success' : 'btn-primary btn-shimmer'}`}
+                              className={`btn btn-sm gap-1.5 ${challengeVerdict === 'success' ? 'btn-success' : 'btn-primary'}`}
                             >
                               {challengeVerdict === 'success' ? (
                                 <><CheckCircle2 size={13} /> Solved!</>
@@ -2045,8 +2044,7 @@ export default function SqlPlayground() {
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: idx * 0.08 }}
-                                whileHover={!isLocked ? { scale: 1.02, y: -2 } : {}}
-                                whileTap={!isLocked ? { scale: 0.98 } : {}}
+                                
                                 className={`relative p-4 rounded-xl border cursor-pointer transition-all duration-200 ${
                                   isCompleted
                                     ? 'border-success/30 bg-success/[0.03]'

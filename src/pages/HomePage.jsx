@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useInView, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Wrench, Zap, Shield, Sparkles,
   Heart, TrendingUp, Code2,
@@ -25,155 +25,139 @@ function getRecentTools() {
 
 const FEATURED_TOOL_IDS = ['api-tester', 'json-formatter', 'color-palette', 'grid-generator', 'regex-generator', 'jwt-decoder'];
 
-// Stagger animation variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.08 },
-  },
-};
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 24, filter: 'blur(4px)' },
-  visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
-};
 
-// Animated counter hook — robust against missing ref, non-numeric target, and rapid re-renders
-function useCounter(target, duration = 1500) {
+/**
+ * Lightweight visibility hook using a single shared IntersectionObserver.
+ * Replaces framer-motion's useInView which creates one observer per call.
+ */
+function useOnScreen(ref, { once = true, margin = '-60px' } = {}) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          if (once) io.disconnect();
+        }
+      },
+      { rootMargin: margin },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref, once, margin]);
+  return visible;
+}
+
+// Animated counter — uses lightweight useOnScreen instead of framer useInView
+function useCounter(target, duration = 1200) {
   const [count, setCount] = useState(0);
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-50px' });
+  const isInView = useOnScreen(ref, { once: true, margin: '-50px' });
   const hasAnimated = useRef(false);
-  
+
   useEffect(() => {
     if (!isInView || hasAnimated.current) return;
-    try {
-      const end = Math.max(0, Math.round(Number(target) || 0));
-      if (end <= 0) { setCount(0); return; }
-      hasAnimated.current = true;
-      let start = 0;
-      const steps = Math.max(1, Math.ceil(duration / 16));
-      const increment = end / steps;
-      const timer = setInterval(() => {
-        start += increment;
-        if (start >= end) {
-          setCount(end);
-          clearInterval(timer);
-        } else {
-          setCount(Math.floor(start));
-        }
-      }, 16);
-      return () => clearInterval(timer);
-    } catch {
-      setCount(Math.max(0, Math.round(Number(target) || 0)));
-    }
+    const end = Math.max(0, Math.round(Number(target) || 0));
+    if (end <= 0) { setCount(0); return; }
+    hasAnimated.current = true;
+    let start = 0;
+    const steps = Math.max(1, Math.ceil(duration / 16));
+    const increment = end / steps;
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) { setCount(end); clearInterval(timer); }
+      else setCount(Math.floor(start));
+    }, 16);
+    return () => clearInterval(timer);
   }, [isInView, target, duration]);
 
   return { count, ref };
 }
 
+/* AnimatedSection — CSS class-based reveal instead of framer-motion per-section.
+   Avoids creating a motion.div + IntersectionObserver for every section. */
 function AnimatedSection({ children, className = '' }) {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-60px' });
+  const visible = useOnScreen(ref, { once: true, margin: '-60px' });
   return (
-    <motion.div
+    <div
       ref={ref}
-      initial={{ opacity: 0, y: 30 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className={className}
+      className={`transition-all duration-500 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} ${className}`}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }
 
-// Enhanced feature card with interactive tilt
+// Feature card — lightweight, no per-card motion wrapper
 function FeatureCard({ icon: Icon, title, description, color, accentColor }) {
-  const cardRef = useRef(null);
-
   return (
-    <motion.div
-      ref={cardRef}
-      variants={itemVariants}
-      whileHover={{ y: -6, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } }}
-      className="group rounded-2xl border border-base-300/40 bg-base-100/80 backdrop-blur-sm p-6 h-full flex flex-col transition-all duration-300 hover:border-primary/25 hover:shadow-xl hover:shadow-primary/[0.06] card-shine feature-accent-card relative overflow-hidden"
+    <div
+      className="group rounded-2xl border border-base-300/40 bg-base-100/80 p-6 h-full flex flex-col transition-all duration-200 hover:border-primary/25 hover:shadow-lg hover:shadow-primary/[0.06] hover:-translate-y-1 feature-accent-card relative overflow-hidden"
       style={{ '--accent-color': accentColor }}
     >
-      {/* Radial glow on hover */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-        style={{ background: `radial-gradient(circle at 30% 20%, ${accentColor}08, transparent 60%)` }} />
-      
-      <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center mb-4 shadow-lg group-hover:shadow-xl group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-300 relative`}>
-        <Icon size={22} className="text-white relative z-10" />
+      <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center mb-4 shadow-lg transition-transform duration-200 group-hover:scale-105`}>
+        <Icon size={22} className="text-white" />
       </div>
-      <h3 className="text-base font-bold mb-2 group-hover:text-primary transition-colors duration-200 relative">{title}</h3>
-      <p className="text-sm opacity-50 leading-relaxed flex-1 relative">{description}</p>
-      <div className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-primary/0 group-hover:text-primary/60 transition-all duration-300 group-hover:translate-x-0.5 relative">
-        Learn more <ChevronRight size={12} className="transition-transform group-hover:translate-x-0.5" />
+      <h3 className="text-base font-bold mb-2 group-hover:text-primary transition-colors duration-200">{title}</h3>
+      <p className="text-sm opacity-50 leading-relaxed flex-1">{description}</p>
+      <div className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-primary/0 group-hover:text-primary/60 transition-all duration-200">
+        Learn more <ChevronRight size={12} />
       </div>
-    </motion.div>
+    </div>
   );
 }
 
-// Enhanced tool showcase card with category color accent
+// Tool showcase card — lightweight, no per-card motion wrapper
 function ToolShowcaseCard({ tool }) {
   const Icon = tool.icon;
   const category = CATEGORIES.find((c) => c.id === tool.category);
 
   return (
-    <motion.div variants={itemVariants}>
-      <Link
-        to={tool.path}
-        className="group block h-full"
-        onClick={() => {
-          try {
-            const recent = getRecentTools().filter(id => id !== tool.id);
-            recent.unshift(tool.id);
-            localStorage.setItem(RECENT_TOOLS_KEY, JSON.stringify(recent.slice(0, 8)));
-          } catch {}
-        }}
-      >
-        <div className="h-full rounded-2xl border border-base-300/40 bg-base-100/80 backdrop-blur-sm p-6 transition-all duration-300 hover:border-primary/25 hover:shadow-xl hover:shadow-primary/[0.08] hover:-translate-y-2 card-shine gradient-border-hover relative overflow-hidden">
-          {/* Subtle corner gradient on hover */}
-          <div className="absolute top-0 right-0 w-32 h-32 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" 
-               style={{ background: 'radial-gradient(circle at 100% 0%, color-mix(in oklch, var(--color-primary) 8%, transparent), transparent 70%)' }} />
-          
-          <div className="flex items-start justify-between mb-4 relative">
-            <div className="w-14 h-14 rounded-2xl bg-primary/[0.08] flex items-center justify-center text-primary transition-all duration-300 group-hover:bg-primary/[0.14] group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-primary/10 group-hover:rotate-[-3deg] relative">
-              <Icon size={26} strokeWidth={1.7} />
-              {/* Pulse ring on hover */}
-              <div className="absolute inset-0 rounded-2xl border-2 border-primary/0 group-hover:border-primary/10 group-hover:scale-125 transition-all duration-500 opacity-0 group-hover:opacity-100" />
-            </div>
-            <div className="flex items-center gap-2">
-              <ArrowUpRight
-                size={18}
-                className="opacity-0 transition-all duration-200 group-hover:opacity-50 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 text-primary"
-              />
-            </div>
+    <Link
+      to={tool.path}
+      className="group block h-full"
+      onClick={() => {
+        try {
+          const recent = getRecentTools().filter(id => id !== tool.id);
+          recent.unshift(tool.id);
+          localStorage.setItem(RECENT_TOOLS_KEY, JSON.stringify(recent.slice(0, 8)));
+        } catch {}
+      }}
+    >
+      <div className="h-full rounded-2xl border border-base-300/40 bg-base-100/80 p-6 transition-all duration-200 hover:border-primary/25 hover:shadow-lg hover:shadow-primary/[0.08] hover:-translate-y-1 relative overflow-hidden">
+        <div className="flex items-start justify-between mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-primary/[0.08] flex items-center justify-center text-primary transition-all duration-200 group-hover:bg-primary/[0.14] group-hover:scale-105">
+            <Icon size={26} strokeWidth={1.7} />
           </div>
-
-          <h3 className="text-[15px] font-bold mb-2 group-hover:text-primary transition-colors duration-200 relative">
-            {tool.name}
-          </h3>
-          <p className="text-xs text-base-content/50 leading-relaxed mb-4 line-clamp-2 relative">
-            {tool.description}
-          </p>
-
-          <div className="flex items-center justify-between relative">
-            {category && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-base-200/60 text-[10px] text-base-content/40 font-semibold border border-base-300/20">
-                {category.emoji} {category.label}
-              </span>
-            )}
-            <span className="text-[11px] font-semibold text-primary opacity-0 group-hover:opacity-70 transition-all duration-200 flex items-center gap-1 group-hover:translate-x-0.5">
-              Open <ChevronRight size={12} className="transition-transform duration-200 group-hover:translate-x-0.5" />
-            </span>
-          </div>
+          <ArrowUpRight
+            size={18}
+            className="opacity-0 transition-opacity duration-200 group-hover:opacity-50 text-primary"
+          />
         </div>
-      </Link>
-    </motion.div>
+
+        <h3 className="text-[15px] font-bold mb-2 group-hover:text-primary transition-colors duration-200">
+          {tool.name}
+        </h3>
+        <p className="text-xs text-base-content/50 leading-relaxed mb-4 line-clamp-2">
+          {tool.description}
+        </p>
+
+        <div className="flex items-center justify-between">
+          {category && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-base-200/60 text-[10px] text-base-content/40 font-semibold border border-base-300/20">
+              {category.emoji} {category.label}
+            </span>
+          )}
+          <span className="text-[11px] font-semibold text-primary opacity-0 group-hover:opacity-70 transition-opacity duration-200 flex items-center gap-1">
+            Open <ChevronRight size={12} />
+          </span>
+        </div>
+      </div>
+    </Link>
   );
 }
 
@@ -275,61 +259,55 @@ function HeroSearchPreview({ tools }) {
   );
 }
 
-// Category card with tool icon previews
+// Category card — lightweight
 function CategoryShowcaseCard({ category, categoryTools }) {
   return (
-    <motion.div variants={itemVariants}>
-      <Link to={`/dashboard?category=${category.id}`} className="group block h-full">
-        <div className="rounded-2xl border border-base-300/40 bg-base-100/80 backdrop-blur-sm p-6 h-full transition-all duration-300 hover:border-primary/25 hover:shadow-xl hover:shadow-primary/[0.06] hover:-translate-y-2 card-shine relative overflow-hidden">
-          {/* Hover gradient accent */}
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" 
-               style={{ background: 'radial-gradient(circle at 0% 100%, color-mix(in oklch, var(--color-primary) 6%, transparent), transparent 60%)' }} />
-          
-          <div className="flex items-center justify-between mb-5 relative">
-            <div className="w-14 h-14 rounded-2xl bg-base-200/60 flex items-center justify-center group-hover:bg-primary/[0.08] transition-all duration-300 group-hover:scale-105">
-              <span className="text-2xl group-hover:scale-110 group-hover:rotate-[-6deg] transition-all duration-300">{category.emoji}</span>
-            </div>
-            <span className="badge badge-primary badge-sm font-bold shadow-sm shadow-primary/15">
-              {categoryTools.length} tools
-            </span>
+    <Link to={`/dashboard?category=${category.id}`} className="group block h-full">
+      <div className="rounded-2xl border border-base-300/40 bg-base-100/80 p-6 h-full transition-all duration-200 hover:border-primary/25 hover:shadow-lg hover:shadow-primary/[0.06] hover:-translate-y-1 relative overflow-hidden">
+        <div className="flex items-center justify-between mb-5">
+          <div className="w-14 h-14 rounded-2xl bg-base-200/60 flex items-center justify-center group-hover:bg-primary/[0.08] transition-colors duration-200">
+            <span className="text-2xl">{category.emoji}</span>
           </div>
-          <h3 className="text-lg font-bold mb-3 group-hover:text-primary transition-colors duration-200 relative">{category.label}</h3>
-          
-          {/* Tool icon preview row */}
-          <div className="flex items-center gap-1.5 mb-4">
-            {categoryTools.slice(0, 4).map((tool, i) => {
-              const ToolIcon = tool.icon;
-              return (
-                <div key={tool.id} className="w-8 h-8 rounded-lg bg-base-200/80 flex items-center justify-center text-base-content/40 group-hover:text-primary/60 transition-all duration-300 border border-base-300/20" style={{ transitionDelay: `${i * 50}ms` }}>
-                  <ToolIcon size={14} strokeWidth={1.8} />
-                </div>
-              );
-            })}
-            {categoryTools.length > 4 && (
-              <div className="w-8 h-8 rounded-lg bg-base-200/80 flex items-center justify-center text-[10px] font-bold text-base-content/30 border border-base-300/20">
-                +{categoryTools.length - 4}
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {categoryTools.slice(0, 3).map((tool) => (
-              <span key={tool.id} className="badge badge-ghost badge-xs font-medium">
-                {tool.name}
-              </span>
-            ))}
-            {categoryTools.length > 3 && (
-              <span className="badge badge-ghost badge-xs font-medium opacity-50">
-                +{categoryTools.length - 3} more
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-primary opacity-60 group-hover:opacity-100 transition-all duration-200 group-hover:translate-x-1 relative">
-            Browse category <ChevronRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
-          </div>
+          <span className="badge badge-primary badge-sm font-bold shadow-sm shadow-primary/15">
+            {categoryTools.length} tools
+          </span>
         </div>
-      </Link>
-    </motion.div>
+        <h3 className="text-lg font-bold mb-3 group-hover:text-primary transition-colors duration-200">{category.label}</h3>
+
+        {/* Tool icon preview row */}
+        <div className="flex items-center gap-1.5 mb-4">
+          {categoryTools.slice(0, 4).map((tool) => {
+            const ToolIcon = tool.icon;
+            return (
+              <div key={tool.id} className="w-8 h-8 rounded-lg bg-base-200/80 flex items-center justify-center text-base-content/40 group-hover:text-primary/60 transition-colors duration-200 border border-base-300/20">
+                <ToolIcon size={14} strokeWidth={1.8} />
+              </div>
+            );
+          })}
+          {categoryTools.length > 4 && (
+            <div className="w-8 h-8 rounded-lg bg-base-200/80 flex items-center justify-center text-[10px] font-bold text-base-content/30 border border-base-300/20">
+              +{categoryTools.length - 4}
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {categoryTools.slice(0, 3).map((tool) => (
+            <span key={tool.id} className="badge badge-ghost badge-xs font-medium">
+              {tool.name}
+            </span>
+          ))}
+          {categoryTools.length > 3 && (
+            <span className="badge badge-ghost badge-xs font-medium opacity-50">
+              +{categoryTools.length - 3} more
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-primary opacity-60 group-hover:opacity-100 transition-opacity duration-200">
+          Browse category <ChevronRight size={13} />
+        </div>
+      </div>
+    </Link>
   );
 }
 
@@ -351,12 +329,6 @@ export default function HomePage() {
   const categoryCounter = useCounter(displayCategories.length, 1200);
   const privacyCounter = useCounter(100, 1000);
 
-  // Parallax for hero
-  const heroRef = useRef(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, 80]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
-
   return (
     <>
       <SEO 
@@ -366,22 +338,20 @@ export default function HomePage() {
       />
       <div className="max-w-6xl mx-auto" role="main">
         {/* ═══════════ HERO SECTION ═══════════ */}
-      <section ref={heroRef} className="relative text-center pt-6 sm:pt-10 pb-16 sm:pb-24">
-        {/* Grid pattern background — removed 3 continuous Framer Motion blob
-            animations (20–25s infinite loops) that ran expensive JS on every
-            frame. Static blurred circles at 3–6% opacity are visually identical. */}
+      <section className="relative text-center pt-6 sm:pt-10 pb-16 sm:pb-24">
+        {/* Static background — no parallax, no JS-driven scroll tracking */}
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
           <div className="hero-grid-bg absolute inset-0 opacity-60" />
           <div className="absolute top-[-10%] left-[15%] w-[500px] h-[500px] rounded-full blur-[120px] bg-primary opacity-[0.06]" />
           <div className="absolute top-[5%] right-[10%] w-[400px] h-[400px] rounded-full blur-[120px] bg-secondary opacity-[0.05]" />
         </div>
 
-        <motion.div style={{ y: heroY, opacity: heroOpacity }}>
+        <div>
         {/* Badge */}
         <motion.div
-          initial={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
           className="flex justify-center mb-8"
         >
           <div className="floating-badge inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-primary/20 bg-primary/[0.06] hover:bg-primary/[0.1] transition-all duration-300 shadow-sm shadow-primary/5 hover:shadow-md hover:shadow-primary/10 cursor-default">
@@ -398,12 +368,12 @@ export default function HomePage() {
 
         {/* Logo */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.7, rotate: -10 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
           className="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-8"
         >
-          <div className="absolute inset-[-12px] rounded-[32px] bg-primary/8 animate-glow-pulse blur-xl" />
+          <div className="absolute inset-[-12px] rounded-[32px] bg-primary/8 blur-xl" />
           <div className="w-full h-full rounded-3xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/25 relative overflow-hidden group/logo cursor-pointer transition-transform duration-300 hover:scale-105">
             <Wrench size={44} className="text-primary-content relative z-10 sm:w-12 sm:h-12 transition-transform duration-300 group-hover/logo:rotate-[-12deg]" />
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover/logo:opacity-100 transition-opacity duration-300" />
@@ -420,9 +390,9 @@ export default function HomePage() {
 
         {/* Headline */}
         <motion.h1
-          initial={{ opacity: 0, y: 24, filter: 'blur(6px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
           className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold mb-6 tracking-tight leading-[1.1]"
         >
           Your All-in-One
@@ -430,9 +400,9 @@ export default function HomePage() {
           <span className="gradient-text-animated">WebToolkit</span>
         </motion.h1>
         <motion.p
-          initial={{ opacity: 0, y: 16, filter: 'blur(4px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-2xl mx-auto text-base sm:text-lg opacity-50 leading-relaxed mb-8 px-4"
         >
           {tools.length} beautifully crafted, lightning-fast utilities — all running client-side
@@ -449,7 +419,7 @@ export default function HomePage() {
           transition={{ duration: 0.5, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-10"
         >
-          <Link to="/dashboard" className="btn btn-primary btn-lg rounded-full px-8 font-bold gap-2.5 btn-shimmer shadow-sm shadow-primary/10 hover:shadow-lg hover:shadow-primary/20 btn-gradient-primary cta-glow group">
+          <Link to="/dashboard" className="btn btn-primary btn-lg rounded-full px-8 font-bold gap-2.5 shadow-sm shadow-primary/10 hover:shadow-lg hover:shadow-primary/20 btn-gradient-primary cta-glow group">
             <TerminalSquare size={18} />
             Explore All Tools
             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-300" />
@@ -467,11 +437,11 @@ export default function HomePage() {
           </a>
         </motion.div>
 
-        {/* Trust signals — enhanced pill badges with subtle animations */}
+        {/* Trust signals — simple CSS transitions, no per-item motion wrappers */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
+          transition={{ duration: 0.4, delay: 0.4 }}
           className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap"
         >
           {[
@@ -479,33 +449,24 @@ export default function HomePage() {
             { icon: Zap, text: 'Zero Latency', color: 'text-warning' },
             { icon: Globe, text: 'Works Offline', color: 'text-info' },
             { icon: Code2, text: 'Open Source', color: 'text-primary' },
-          ].map(({ icon: Icon, text, color }, i) => (
-            <motion.span
+          ].map(({ icon: Icon, text, color }) => (
+            <span
               key={text}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 0.6, scale: 1 }}
-              transition={{ delay: 0.8 + i * 0.08, duration: 0.4 }}
-              whileHover={{ opacity: 1, y: -2, scale: 1.02 }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-base-200/60 border border-base-300/30 text-xs font-medium cursor-default transition-all duration-200 hover:border-base-300/50 hover:shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-base-200/60 border border-base-300/30 text-xs font-medium cursor-default opacity-60 hover:opacity-100 transition-opacity duration-200"
             >
               <Icon size={12} className={color} /> {text}
-            </motion.span>
+            </span>
           ))}
         </motion.div>
-        </motion.div>
+        </div>
       </section>
 
       {/* ═══════════ FEATURES SECTION ═══════════ */}
       <AnimatedSection className="mb-28">
         <div className="text-center mb-14">
-          <motion.span
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="badge badge-primary badge-sm gap-1.5 mb-4 font-semibold shadow-sm shadow-primary/15 inline-flex"
-          >
+          <span className="badge badge-primary badge-sm gap-1.5 mb-4 font-semibold shadow-sm shadow-primary/15 inline-flex">
             <Zap size={11} /> Why WebToolkit?
-          </motion.span>
+          </span>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
             Built for <span className="gradient-text">Speed & Privacy</span>
           </h2>
@@ -514,13 +475,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-50px' }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <FeatureCard
             icon={Zap}
             title="Lightning Fast"
@@ -549,7 +504,7 @@ export default function HomePage() {
             color="bg-gradient-to-br from-purple-500 to-pink-500"
             accentColor="#a855f7"
           />
-        </motion.div>
+        </div>
       </AnimatedSection>
 
       {/* ═══════════ RECENTLY USED (if any) ═══════════ */}
@@ -570,29 +525,22 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {recentTools.map((tool, idx) => {
+            {recentTools.map((tool) => {
               const Icon = tool.icon;
               return (
-                <motion.div
+                <Link
                   key={tool.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.06, duration: 0.4 }}
+                  to={tool.path}
+                  className="group flex items-center gap-3 p-4 rounded-xl border border-base-300/40 bg-base-100/80 hover:border-primary/25 hover:bg-primary/[0.04] hover:-translate-y-1 hover:shadow-md transition-all duration-200 h-full"
                 >
-                  <Link
-                    to={tool.path}
-                    className="group flex items-center gap-3 p-4 rounded-xl border border-base-300/40 bg-base-100/80 backdrop-blur-sm hover:border-primary/25 hover:bg-primary/[0.04] hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/[0.04] transition-all duration-200 h-full"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center text-primary shrink-0 group-hover:bg-primary/12 group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-200">
-                      <Icon size={18} strokeWidth={1.8} />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold truncate block group-hover:text-primary transition-colors duration-200">{tool.name}</span>
-                      <span className="text-[10px] opacity-35 truncate block">{tool.description.slice(0, 30)}...</span>
-                    </div>
-                  </Link>
-                </motion.div>
+                  <div className="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center text-primary shrink-0 group-hover:bg-primary/12 group-hover:scale-105 transition-all duration-200">
+                    <Icon size={18} strokeWidth={1.8} />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold truncate block group-hover:text-primary transition-colors duration-200">{tool.name}</span>
+                    <span className="text-[10px] opacity-35 truncate block">{tool.description.slice(0, 30)}...</span>
+                  </div>
+                </Link>
               );
             })}
           </div>
@@ -620,17 +568,11 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-50px' }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {featuredTools.map((tool) => (
             <ToolShowcaseCard key={tool.id} tool={tool} />
           ))}
-        </motion.div>
+        </div>
       </AnimatedSection>
 
       {/* ═══════════ TOOL CATEGORIES ═══════════ */}
@@ -645,20 +587,14 @@ export default function HomePage() {
           <p className="text-sm opacity-45 mt-3">Find the right tool for every task</p>
         </div>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-50px' }}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5"
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
           {displayCategories.map((category) => {
             const categoryTools = getToolsByCategory(category.id);
             return (
               <CategoryShowcaseCard key={category.id} category={category} categoryTools={categoryTools} />
             );
           })}
-        </motion.div>
+        </div>
       </AnimatedSection>
 
       {/* ═══════════ STATS SECTION ═══════════ */}
@@ -677,26 +613,21 @@ export default function HomePage() {
             { counter: categoryCounter, label: 'Tool Categories', suffix: '', icon: Layers, color: 'text-secondary', bg: 'bg-secondary/10', borderHover: 'hover:border-secondary/20' },
             { counter: privacyCounter, label: 'Client-Side', suffix: '%', icon: Cpu, color: 'text-success', bg: 'bg-success/10', borderHover: 'hover:border-success/20' },
             { counter: null, value: 0, label: 'Data Collected', suffix: '', icon: Shield, color: 'text-info', bg: 'bg-info/10', borderHover: 'hover:border-info/20' },
-          ].map(({ counter, value, label, suffix, icon: Icon, color, bg, borderHover }, idx) => {
+          ].map(({ counter, value, label, suffix, icon: Icon, color, bg, borderHover }) => {
             const displayValue = counter ? counter.count : (value ?? 0);
             return (
-              <motion.div
+              <div
                 key={label}
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                whileHover={{ y: -4, transition: { duration: 0.3 } }}
-                className={`stat-card-frost rounded-2xl p-4 sm:p-7 text-center group cursor-default ${borderHover}`}
+                className={`stat-card-frost rounded-2xl p-4 sm:p-7 text-center group cursor-default hover:-translate-y-1 transition-transform duration-200 ${borderHover}`}
               >
-                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${bg} flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-300`}>
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${bg} flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-200`}>
                   <Icon size={18} className={`${color} sm:w-5 sm:h-5`} />
                 </div>
                 <div ref={counter?.ref ?? undefined} className="text-xl sm:text-3xl lg:text-4xl font-extrabold mb-1.5">
                   <span className="counter-highlight gradient-text">{displayValue}{suffix}</span>
                 </div>
                 <p className="text-[10px] sm:text-xs font-semibold opacity-45 tracking-wide">{label}</p>
-              </motion.div>
+              </div>
             );
           })}
         </div>
@@ -714,17 +645,11 @@ export default function HomePage() {
           <p className="text-sm opacity-45 mt-3 max-w-md mx-auto">Every utility you need, in one place — explore the full collection</p>
         </div>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-50px' }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {tools.map((tool) => (
             <ToolShowcaseCard key={tool.id} tool={tool} />
           ))}
-        </motion.div>
+        </div>
       </AnimatedSection>
 
       {/* ═══════════ CTA SECTION ═══════════ */}
@@ -742,14 +667,10 @@ export default function HomePage() {
           <div className="absolute bottom-[-20%] left-[-10%] w-64 h-64 rounded-full blur-[80px] bg-secondary/6" />
 
           <div className="relative px-8 py-16 sm:py-20 text-center">
-            <motion.div
-              className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-7 relative"
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              transition={{ type: 'spring', stiffness: 300 }}
-            >
-              <div className="absolute inset-[-4px] rounded-2xl bg-primary/8 animate-glow-pulse blur-md" />
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-7 relative hover:scale-105 transition-transform duration-200">
+              <div className="absolute inset-[-4px] rounded-2xl bg-primary/8 blur-md" />
               <Sparkles size={28} className="text-primary relative z-10" />
-            </motion.div>
+            </div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-4 tracking-tight">
               Ready to <span className="gradient-text-animated">Build Faster</span>?
             </h2>
@@ -758,7 +679,7 @@ export default function HomePage() {
               No sign-up, no limits — completely free.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link to="/dashboard" className="btn btn-primary btn-lg rounded-full px-8 font-bold gap-2.5 btn-shimmer shadow-md shadow-primary/15 hover:shadow-xl hover:shadow-primary/25 btn-gradient-primary cta-glow group">
+              <Link to="/dashboard" className="btn btn-primary btn-lg rounded-full px-8 font-bold gap-2.5 shadow-md shadow-primary/15 hover:shadow-xl hover:shadow-primary/25 btn-gradient-primary cta-glow group">
                 <TerminalSquare size={17} />
                 Open Dashboard
                 <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform duration-300" />

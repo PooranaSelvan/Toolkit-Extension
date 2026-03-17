@@ -220,8 +220,6 @@ export default function ResponseTests({ tests, onSetTests, response }) {
         <div className="flex items-center gap-1.5">
           <div className="relative">
             <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
               onClick={() => setShowPresets(!showPresets)}
               className={`btn btn-xs rounded-xl gap-1 ${showPresets ? 'btn-secondary' : 'btn-ghost'}`}
             >
@@ -257,8 +255,6 @@ export default function ResponseTests({ tests, onSetTests, response }) {
           </div>
 
           <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
             onClick={handleAddTest}
             className="btn btn-ghost btn-xs gap-1 text-primary rounded-xl hover:bg-primary/10 border border-dashed border-primary/20"
           >

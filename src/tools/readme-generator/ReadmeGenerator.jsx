@@ -366,8 +366,6 @@ ${generatedMarkdown.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
               <div className="relative">
                 <motion.button
                   onClick={() => setShowDrafts(!showDrafts)}
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
                   className={`btn btn-sm gap-1.5 rounded-xl transition-all duration-200 ${showDrafts ? 'btn-secondary shadow-md shadow-secondary/20' : 'btn-ghost hover:bg-base-200/80'}`}
                   title="Saved drafts"
                 >
@@ -454,14 +452,13 @@ ${generatedMarkdown.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
                       }}
                     />
                     <motion.button
-                      whileTap={{ scale: 0.9 }}
                       onClick={handleSaveDraft}
                       disabled={!draftName.trim()}
                       className="btn btn-primary btn-xs rounded-lg shadow-sm shadow-primary/20"
                     >
                       Save
                     </motion.button>
-                    <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowSaveInput(false)} className="btn btn-ghost btn-xs rounded-lg">✕</motion.button>
+                    <motion.button onClick={() => setShowSaveInput(false)} className="btn btn-ghost btn-xs rounded-lg">✕</motion.button>
                   </motion.div>
                 ) : (
                   <motion.button
@@ -469,8 +466,6 @@ ${generatedMarkdown.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.96 }}
                     onClick={() => setShowSaveInput(true)}
                     className="btn btn-ghost btn-sm gap-1.5 rounded-xl hover:bg-base-200/80"
                     title="Save as draft"
@@ -485,8 +480,6 @@ ${generatedMarkdown.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
 
               {/* Widget Library toggle */}
               <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
                 onClick={() => { setShowWidgets(!showWidgets); setShowSectionTemplates(false); }}
                 className={`btn btn-sm gap-1.5 rounded-xl transition-all duration-200 ${showWidgets ? 'btn-primary shadow-md shadow-primary/20' : 'btn-ghost hover:bg-base-200/80'}`}
                 title="Widget Library — insert stats, badges, typing SVGs"
@@ -497,8 +490,6 @@ ${generatedMarkdown.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
 
               {/* Section Templates toggle */}
               <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
                 onClick={() => { setShowSectionTemplates(!showSectionTemplates); setShowWidgets(false); }}
                 className={`btn btn-sm gap-1.5 rounded-xl transition-all duration-200 ${showSectionTemplates ? 'btn-secondary shadow-md shadow-secondary/20' : 'btn-ghost hover:bg-base-200/80'}`}
                 title="Section Templates — pre-written content blocks"
@@ -511,8 +502,6 @@ ${generatedMarkdown.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
 
               {/* Share URL */}
               <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
                 onClick={handleShareUrl}
                 className={`btn btn-sm gap-1.5 rounded-xl transition-all duration-300 ${
                   shareSuccess ? 'btn-success shadow-md shadow-success/20' : 'btn-ghost hover:bg-base-200/80'
@@ -527,8 +516,6 @@ ${generatedMarkdown.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
 
               <div className="relative">
                 <motion.button
-                  whileHover={{ scale: 1.04, rotate: 180 }}
-                  whileTap={{ scale: 0.9 }}
                   onClick={handleReset}
                   className="btn btn-ghost btn-sm gap-1.5 rounded-xl hover:bg-error/10 hover:text-error transition-colors"
                   title="Reset all fields"
@@ -562,8 +549,6 @@ ${generatedMarkdown.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
               </div>
 
               <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
                 onClick={() => setIsFullscreen(!isFullscreen)}
                 className="btn btn-ghost btn-sm gap-1.5 rounded-xl hover:bg-base-200/80"
                 title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
@@ -575,8 +560,6 @@ ${generatedMarkdown.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
 
               {/* Copy button — enhanced */}
               <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.95 }}
                 onClick={() => copyToClipboard(generatedMarkdown)}
                 className={`btn btn-sm gap-1.5 rounded-xl transition-all duration-300 ${
                   copied

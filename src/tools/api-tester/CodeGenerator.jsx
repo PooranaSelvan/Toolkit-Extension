@@ -111,8 +111,6 @@ export default function CodeGenerator({ request, resolveEnvVars }) {
             {LANGUAGES.map(({ key, label }) => (
               <motion.button
                 key={key}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
                 onClick={() => setLanguage(key)}
                 className={`btn btn-xs rounded-lg transition-all duration-200 ${language === key ? 'btn-primary shadow-sm shadow-primary/20' : 'btn-ghost'}`}
               >
@@ -121,8 +119,6 @@ export default function CodeGenerator({ request, resolveEnvVars }) {
             ))}
           </div>
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
             onClick={() => copyToClipboard(code)}
             className={`btn btn-xs gap-1 rounded-xl transition-all duration-300 ${
               copied ? 'btn-success shadow-sm shadow-success/20' : 'btn-ghost hover:bg-base-200/80'
